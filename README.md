@@ -1,6 +1,7 @@
 # Course Notifier
 
 > Real-time university course availability tracker with instant notifications
+**Note:** This project was originally built for Zarqa University (Jordan) but can be adapted for other universities. The scraper module is designed to be replaceable for different university registration systems.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
@@ -21,6 +22,9 @@ Course Notifier helps university students track course availability in real-time
 - **Responsive Design** - Works on desktop and mobile
 - **Admin Dashboard** - Full system management and analytics
 - **RTL Support** - Full Arabic language support
+
+
+## RoadMap
 - [x] When Opening Multiple Things in the Mobile Side Web Like the Side Bar and the For Instance the Profile Drop Down it should close the other and not all Open In the same Time 
 - [x] Making Sure that Filters are sticked after Rebuild and are triggered Right 
 - [x] Making Sure that Remove from Watch List and Add Are Smooth In The website and do not need Refresh Web Page  For Both PC and Mobile One 
@@ -246,6 +250,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by the need for better course registration tools
 - Thanks to all contributors and testers
 
----
-
-**Note:** This project was originally built for Zarqa University (Jordan) but can be adapted for other universities. The scraper module is designed to be replaceable for different university registration systems.
