@@ -1,0 +1,19 @@
+{
+  "name": "Course Notifier",
+  "short_name": "CourseNotifier",
+  "description": "تتبع توفر المواد الجامعية واحصل على إشعارات فورية",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#06b6d4",
+  "background_color": "#09090b",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/"
+}
