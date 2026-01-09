@@ -80,3 +80,7 @@ media/
 
 # Local override files
 docker-compose.local.yml
+
+# AI Agent instructions (local only)
+AGENTS.md
+.serena/
