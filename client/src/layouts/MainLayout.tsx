@@ -95,29 +95,24 @@ const MainLayout: React.FC = () => {
             {/* Right side - Actions */}
             <div className="flex items-center gap-3">
 
-              {/* Report Problem Button - More Obvious */}
+              {/* Report Problem Button - Icon only on mobile/tablet, full text on desktop */}
               <button
                 onClick={() => setShowReportModal(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/30 transition-all group"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/30 transition-all group"
                 title="Report a Problem"
               >
                 <AlertCircle className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-medium text-amber-400">Report Issue</span>
-              </button>
-
-              {/* Mobile Report Button */}
-              <button
-                onClick={() => setShowReportModal(true)}
-                className="md:hidden p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-colors group"
-                title="Report a Problem"
-              >
-                <AlertCircle className="w-5 h-5 text-amber-400" />
+                <span className="hidden lg:block text-sm font-medium text-amber-400">Report Issue</span>
               </button>
 
               {/* User Dropdown */}
               <div className="relative" ref={userMenuRef}>
                 <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  onClick={() => {
+                    setIsUserMenuOpen(!isUserMenuOpen);
+                    // Close mobile menu when opening user menu
+                    if (!isUserMenuOpen) setIsMobileMenuOpen(false);
+                  }}
                   className={cn(
                     'flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200',
                     'hover:bg-zinc-800/50',
@@ -190,7 +185,11 @@ const MainLayout: React.FC = () => {
 
               {/* Mobile Menu Button */}
               <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                onClick={() => {
+                  setIsMobileMenuOpen(!isMobileMenuOpen);
+                  // Close user menu when opening mobile menu
+                  if (!isMobileMenuOpen) setIsUserMenuOpen(false);
+                }}
                 className="md:hidden p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors"
               >
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
