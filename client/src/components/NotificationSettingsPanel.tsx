@@ -8,11 +8,9 @@ import {
   Smartphone,
   DoorOpen,
   DoorClosed,
-  Copy,
-  Save,
-  Loader2
+  Copy
 } from 'lucide-react';
-import { Card, Button, Toggle } from './ui';
+import { Card, Toggle } from './ui';
 import { authService } from '../services/authService';
 import { NotificationSettings } from '../types';
 
@@ -28,7 +26,6 @@ const NotificationSettingsPanel: React.FC = () => {
     notifyByWeb: true,
     notifyByPhone: false,
   });
-  const [hasChanges, setHasChanges] = useState(false);
 
   // Fetch current settings from server
   const { isLoading } = useQuery(
@@ -43,31 +40,30 @@ const NotificationSettingsPanel: React.FC = () => {
     }
   );
 
-  // Update mutation
+  // Update mutation - auto-saves on toggle
   const updateMutation = useMutation(
     (newSettings: Partial<NotificationSettings>) => 
       authService.updateNotificationSettings(newSettings),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('notificationSettings');
-        setHasChanges(false);
-        toast.success('Notification settings saved!');
+        // Show subtle success feedback
+        toast.success('Settings saved', { duration: 1500 });
       },
       onError: () => {
         toast.error('Failed to save settings. Please try again.');
+        // Refetch to restore previous state
+        queryClient.invalidateQueries('notificationSettings');
       },
     }
   );
 
-  // Track changes
+  // Auto-save on toggle change
   const handleSettingChange = (key: keyof NotificationSettings, value: boolean) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    setHasChanges(true);
-  };
-
-  // Save handler
-  const handleSave = () => {
-    updateMutation.mutate(settings);
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    // Auto-save immediately
+    updateMutation.mutate(newSettings);
   };
 
   if (isLoading) {
@@ -94,16 +90,6 @@ const NotificationSettingsPanel: React.FC = () => {
             <p className="text-sm text-zinc-400">These settings apply to all your watched courses</p>
           </div>
         </div>
-        
-        {hasChanges && (
-          <Button
-            onClick={handleSave}
-            disabled={updateMutation.isLoading}
-            icon={updateMutation.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          >
-            {updateMutation.isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        )}
       </div>
 
       {/* Settings Grid */}
@@ -117,18 +103,21 @@ const NotificationSettingsPanel: React.FC = () => {
               onChange={(checked) => handleSettingChange('notifyOnOpen', checked)}
               label="When course opens"
               icon={DoorOpen}
+              disabled={updateMutation.isLoading}
             />
             <Toggle
               checked={settings.notifyOnClose}
               onChange={(checked) => handleSettingChange('notifyOnClose', checked)}
               label="When course closes"
               icon={DoorClosed}
+              disabled={updateMutation.isLoading}
             />
             <Toggle
               checked={settings.notifyOnSimilarCourse}
               onChange={(checked) => handleSettingChange('notifyOnSimilarCourse', checked)}
               label="Similar sections open"
               icon={Copy}
+              disabled={updateMutation.isLoading}
             />
           </div>
         </div>
@@ -142,18 +131,21 @@ const NotificationSettingsPanel: React.FC = () => {
               onChange={(checked) => handleSettingChange('notifyByEmail', checked)}
               label="Email"
               icon={Mail}
+              disabled={updateMutation.isLoading}
             />
             <Toggle
               checked={settings.notifyByWeb}
               onChange={(checked) => handleSettingChange('notifyByWeb', checked)}
               label="Web notification"
               icon={Bell}
+              disabled={updateMutation.isLoading}
             />
             <Toggle
               checked={settings.notifyByPhone}
               onChange={(checked) => handleSettingChange('notifyByPhone', checked)}
               label="Phone App"
               icon={Smartphone}
+              disabled={updateMutation.isLoading}
             />
           </div>
         </div>

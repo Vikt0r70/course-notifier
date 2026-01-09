@@ -133,6 +133,7 @@ const Dashboard: React.FC = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries('courses');
+        queryClient.invalidateQueries('watchlist');
         toast.success('Watchlist updated successfully!');
       },
       onError: () => {

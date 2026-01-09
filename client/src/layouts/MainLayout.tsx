@@ -13,7 +13,7 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
-import NotificationBell from '../components/NotificationBell';
+// NotificationBell removed - users access notifications via nav link
 import ReportProblemModal from '../components/ReportProblemModal';
 import { cn } from '../components/ui/utils';
 import { Avatar } from '../components/ui';
@@ -94,8 +94,6 @@ const MainLayout: React.FC = () => {
 
             {/* Right side - Actions */}
             <div className="flex items-center gap-3">
-              {/* Notification Bell */}
-              <NotificationBell />
 
               {/* Report Problem Button - More Obvious */}
               <button
