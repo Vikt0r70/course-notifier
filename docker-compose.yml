@@ -73,6 +73,7 @@ services:
         condition: service_healthy
     networks:
       - course-notifier-network
+      - caddy-proxy_default
     volumes:
       - ./server/scraped-data:/app/scraped-data
       - ./server/firebase-service-account.json:/app/firebase-service-account.json:ro
@@ -101,11 +102,14 @@ services:
       - server
     networks:
       - course-notifier-network
+      - caddy-proxy_default
     restart: unless-stopped
 
 networks:
   course-notifier-network:
     driver: bridge
+  caddy-proxy_default:
+    external: true
 
 volumes:
   postgres_data:

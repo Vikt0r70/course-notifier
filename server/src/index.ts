@@ -11,6 +11,10 @@ Sentry.init({
     Sentry.httpIntegration(),
     Sentry.expressIntegration(),
   ],
+  // Enable Sentry Logs
+  _experiments: {
+    enableLogs: true,
+  },
 });
 
 import express from 'express';
