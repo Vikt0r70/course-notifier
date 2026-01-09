@@ -16,7 +16,7 @@ interface LogData {
 
 const createLogger = () => {
   const log = (level: LogLevel, message: string, data?: LogData) => {
-    // Always log to console in development
+    // Always log to console
     const consoleMethod = level === 'debug' ? 'log' : level;
     console[consoleMethod](`[${level.toUpperCase()}] ${message}`, data || '');
 
@@ -48,58 +48,48 @@ const createLogger = () => {
 export const logger = createLogger();
 
 /**
- * Sentry Metrics - Track custom metrics
- * Note: Metrics API is available in Sentry SDK 10.x+
- * Usage:
- *   import { metrics } from '@/utils/sentryLogger';
- *   metrics.increment('courses.viewed');
- *   metrics.gauge('filter.active_count', 5);
- *   metrics.timing('api.response_time', 150);
+ * Sentry Metrics helper
+ * Uses Sentry's built-in metrics when available
  */
 export const metrics = {
   /**
-   * Increment a counter metric
+   * Track a custom metric using Sentry spans
    */
-  increment: (name: string, value: number = 1, tags?: Record<string, string>) => {
-    try {
-      Sentry.metrics.increment(name, value, { tags });
-    } catch {
-      // Metrics API may not be available
-      console.debug(`[Metrics] ${name}: +${value}`, tags);
-    }
+  track: (name: string, value: number, unit?: string) => {
+    Sentry.startSpan(
+      {
+        name: `metric.${name}`,
+        op: 'metric',
+        attributes: { value, unit: unit || 'count' },
+      },
+      () => {
+        // Span will be recorded in Sentry traces
+      }
+    );
   },
 
   /**
-   * Set a gauge metric (current value)
+   * Time an async operation
    */
-  gauge: (name: string, value: number, tags?: Record<string, string>) => {
-    try {
-      Sentry.metrics.gauge(name, value, { tags });
-    } catch {
-      console.debug(`[Metrics] ${name}: ${value}`, tags);
-    }
+  timeAsync: async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+    return Sentry.startSpan(
+      { name, op: 'function' },
+      async () => {
+        return await fn();
+      }
+    );
   },
 
   /**
-   * Record a timing/distribution metric
+   * Time a sync operation
    */
-  timing: (name: string, value: number, unit: string = 'millisecond', tags?: Record<string, string>) => {
-    try {
-      Sentry.metrics.distribution(name, value, { tags, unit });
-    } catch {
-      console.debug(`[Metrics] ${name}: ${value}${unit}`, tags);
-    }
-  },
-
-  /**
-   * Record a set metric (unique values)
-   */
-  set: (name: string, value: string | number, tags?: Record<string, string>) => {
-    try {
-      Sentry.metrics.set(name, value, { tags });
-    } catch {
-      console.debug(`[Metrics] ${name}: ${value}`, tags);
-    }
+  time: <T>(name: string, fn: () => T): T => {
+    return Sentry.startSpan(
+      { name, op: 'function' },
+      () => {
+        return fn();
+      }
+    );
   },
 };
 
