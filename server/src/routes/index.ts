@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import * as Sentry from '@sentry/node';
 import authRoutes from './auth';
 import courseRoutes from './courses';
 import watchlistRoutes from './watchlist';
@@ -26,6 +27,39 @@ router.get('/config/majors', (req, res) => {
 
 router.get('/health', (req, res) => {
   res.json({ success: true, message: 'Server is running' });
+});
+
+// Sentry test endpoint - triggers a test error to verify Sentry integration
+router.get('/test-sentry', (req, res) => {
+  const testId = `test-${Date.now()}`;
+  
+  // Add breadcrumb for context
+  Sentry.addBreadcrumb({
+    category: 'test',
+    message: 'Sentry test endpoint called',
+    level: 'info',
+    data: { testId }
+  });
+
+  // Capture a test message
+  Sentry.captureMessage(`Sentry test message (ID: ${testId})`, 'info');
+
+  // Throw a test error that Sentry will capture
+  throw new Error(`Sentry test error (ID: ${testId}) - This is a test error to verify Sentry integration is working correctly.`);
+});
+
+// Alternative: Test Sentry without throwing (just sends a message)
+router.get('/test-sentry-safe', (req, res) => {
+  const testId = `test-${Date.now()}`;
+  
+  Sentry.captureMessage(`Sentry safe test (ID: ${testId})`, 'info');
+  
+  res.json({ 
+    success: true, 
+    message: 'Sentry test message sent',
+    testId,
+    note: 'Check your Sentry dashboard for the message'
+  });
 });
 
 export default router;
