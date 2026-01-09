@@ -1,0 +1,47 @@
+#!/bin/bash
+
+echo "🚀 Course Notifier - Docker Deployment"
+echo "======================================"
+
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+    echo "❌ Docker is not running. Please start Docker first."
+    exit 1
+fi
+
+echo "📦 Building Docker images..."
+docker-compose build --no-cache
+
+echo "🧹 Cleaning up old containers..."
+docker-compose down -v
+
+echo "🔧 Starting services..."
+docker-compose up -d
+
+echo "⏳ Waiting for services to be ready..."
+sleep 15
+
+echo ""
+echo "✅ Deployment Complete!"
+echo ""
+echo "📊 Service Status:"
+docker-compose ps
+
+echo ""
+echo "🌐 Access Points:"
+echo "   Frontend:  http://localhost:3000"
+echo "   Backend:   http://localhost:5000/api"
+echo "   Database:  localhost:5432"
+echo ""
+
+echo "📝 Next Steps:"
+echo "   1. Create admin user (register then run SQL):"
+echo "      docker-compose exec db psql -U coursenotifier -d coursenotifier -c \"UPDATE users SET is_admin = true WHERE email = 'your@email.com';\""
+echo ""
+echo "   2. Run scraper manually:"
+echo "      docker-compose exec server npm run scraper"
+echo ""
+echo "   3. View logs:"
+echo "      docker-compose logs -f"
+echo ""
+echo "🎉 Happy coding!"

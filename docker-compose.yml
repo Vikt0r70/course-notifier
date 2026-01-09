@@ -1,0 +1,111 @@
+# Course Notifier - Docker Compose Configuration
+# 
+# SETUP INSTRUCTIONS:
+# 1. Copy .env.docker.example to .env.docker
+# 2. Fill in your actual values in .env.docker
+# 3. Run: docker compose --env-file .env.docker up -d
+#
+# For development, you can also create a docker-compose.override.yml
+# with your local settings (this file is gitignored)
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: course-notifier-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-coursenotifier}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-coursenotifier}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - course-notifier-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-coursenotifier}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: course-notifier-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - course-notifier-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: course-notifier-server
+    ports:
+      - "${SERVER_PORT:-5000}:5000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-coursenotifier}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-coursenotifier}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:?SMTP_USER is required}
+      SMTP_PASS: ${SMTP_PASS:?SMTP_PASS is required}
+      SMTP_FROM: ${SMTP_FROM:-${SMTP_USER}}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
+      SMTP_BACKUP_USER: ${SMTP_BACKUP_USER:-}
+      SMTP_BACKUP_PASS: ${SMTP_BACKUP_PASS:-}
+      SMTP_BACKUP_FROM: ${SMTP_BACKUP_FROM:-}
+      NODE_OPTIONS: --max-old-space-size=512
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - course-notifier-network
+    volumes:
+      - ./server/scraped-data:/app/scraped-data
+      - ./server/firebase-service-account.json:/app/firebase-service-account.json:ro
+    restart: unless-stopped
+    init: true
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    container_name: course-notifier-client
+    ports:
+      - "${CLIENT_PORT:-3000}:80"
+    depends_on:
+      - server
+    networks:
+      - course-notifier-network
+    restart: unless-stopped
+
+networks:
+  course-notifier-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
