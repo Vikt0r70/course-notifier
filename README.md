@@ -1,6 +1,8 @@
 # Course Notifier
 
 > Real-time university course availability tracker with instant notifications
+
+
 **Note:** This project was originally built for Zarqa University (Jordan) but can be adapted for other universities. The scraper module is designed to be replaceable for different university registration systems.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
