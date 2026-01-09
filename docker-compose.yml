@@ -113,3 +113,5 @@ networks:
 
 volumes:
   postgres_data:
+    external: true
+    name: course_notifier_final_postgres_data
