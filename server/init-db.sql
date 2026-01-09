@@ -53,8 +53,9 @@ CREATE TABLE IF NOT EXISTS courses (
     study_type VARCHAR(100) NOT NULL,
     time_shift VARCHAR(50),
     period VARCHAR(100),
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_updated TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE,
+    first_opened_at TIMESTAMP WITH TIME ZONE,
     UNIQUE(course_code, section, faculty, time_shift)
 );
 
@@ -72,6 +73,8 @@ CREATE TABLE IF NOT EXISTS watchlists (
     notify_by_email BOOLEAN DEFAULT TRUE,
     notify_by_web BOOLEAN DEFAULT TRUE,
     notify_by_phone BOOLEAN DEFAULT FALSE,
+    similar_filters JSONB DEFAULT NULL,
+    similar_filter_newly_opened BOOLEAN DEFAULT FALSE,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, course_code, section)
 );
