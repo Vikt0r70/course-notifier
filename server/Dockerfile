@@ -27,8 +27,8 @@ WORKDIR /app
 # This layer is only rebuilt when package.json changes
 COPY package*.json ./
 
-# Install dependencies (cached unless package.json changes)
-RUN npm ci --include=dev
+# Install dependencies (npm install for compatibility without lockfile)
+RUN npm install
 
 # Now copy source code (this layer changes frequently)
 COPY --chown=appuser:appgroup . .
