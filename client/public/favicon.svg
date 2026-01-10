@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Dark background for contrast -->
+  <rect width="512" height="512" rx="96" fill="#09090b"/>
+  
+  <!-- Magnifying glass lens (circle) -->
+  <circle cx="220" cy="220" r="120" fill="none" stroke="url(#gradient1)" stroke-width="28" stroke-linecap="round"/>
+  
+  <!-- Inner glow effect -->
+  <circle cx="220" cy="220" r="100" fill="rgba(6, 182, 212, 0.05)"/>
+  
+  <!-- Magnifying glass handle -->
+  <line x1="310" y1="310" x2="420" y2="420" stroke="url(#gradient2)" stroke-width="32" stroke-linecap="round"/>
+  
+  <!-- Handle end cap for depth -->
+  <circle cx="420" cy="420" r="16" fill="#d946ef"/>
+  
+  <!-- Lens highlight/shine -->
+  <circle cx="190" cy="190" r="30" fill="rgba(255, 255, 255, 0.15)"/>
+  
+  <!-- Gradient definitions -->
+  <defs>
+    <!-- Cyan to blue gradient for lens -->
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Violet to fuchsia gradient for handle -->
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d946ef;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

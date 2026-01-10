@@ -54,11 +54,19 @@ router.get('/test-sentry-safe', (req, res) => {
   
   Sentry.captureMessage(`Sentry safe test (ID: ${testId})`, 'info');
   
+  // Test Sentry Metrics (requires SDK 10.25.0+)
+  Sentry.metrics.count('test.api_calls', 1);
+  Sentry.metrics.gauge('test.random_value', Math.random() * 100);
+  Sentry.metrics.distribution('test.response_time', Math.random() * 500, {
+    unit: 'millisecond',
+    attributes: { endpoint: 'test-sentry-safe' }
+  });
+  
   res.json({ 
     success: true, 
-    message: 'Sentry test message sent',
+    message: 'Sentry test message and metrics sent',
     testId,
-    note: 'Check your Sentry dashboard for the message'
+    note: 'Check your Sentry dashboard for the message and metrics'
   });
 });
 

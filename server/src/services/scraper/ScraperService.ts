@@ -1,4 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
+import * as Sentry from '@sentry/node';
 import { Course, ScraperLog } from '../../models';
 import NotificationService from '../notification/NotificationService';
 
@@ -230,6 +231,16 @@ class ScraperService {
       const closedCount = total - openCount;
       const bachelorCount = allCourses.filter(c => c.studyType === 'بكالوريوس').length;
       const graduateCount = allCourses.filter(c => c.studyType === 'الدراسات العليا').length;
+      
+      // Send Sentry Metrics
+      Sentry.metrics.count('scraper.runs', 1);
+      Sentry.metrics.gauge('scraper.courses_total', total);
+      Sentry.metrics.gauge('scraper.courses_open', openCount);
+      Sentry.metrics.gauge('scraper.courses_closed', closedCount);
+      Sentry.metrics.distribution('scraper.duration', parseFloat(totalElapsed), {
+        unit: 'second',
+        attributes: { status: 'success' }
+      });
       
       console.log('\n' + '='.repeat(60));
       console.log('✅ SCRAPER COMPLETED SUCCESSFULLY');
