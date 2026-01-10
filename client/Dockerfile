@@ -13,8 +13,8 @@ ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 # Copy ONLY package files first (better layer caching)
 COPY package*.json ./
 
-# Use npm ci for faster, reproducible installs
-RUN npm ci
+# Install dependencies (npm install for projects without lockfile)
+RUN npm install
 
 # Copy source code (this layer changes frequently)
 COPY . .
