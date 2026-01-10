@@ -113,3 +113,6 @@ networks:
 
 volumes:
   postgres_data:
+    # Use external volume to persist data across project rebuilds
+    # This ensures test and prod use the same database if needed
+    name: coursenotifier_postgres_data
