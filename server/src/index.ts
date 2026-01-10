@@ -1,20 +1,30 @@
 // Sentry must be imported first
 import * as Sentry from '@sentry/node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 // Initialize Sentry before other imports
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
+  
+  // Tracing - sample rate for performance monitoring
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
-  profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  
+  // Profiling - CPU profiling for performance insights
+  profileSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  profileLifecycle: 'trace',
+  
+  // Enable Sentry Logs (captures console.log, console.error, etc.)
+  enableLogs: true,
+  
   integrations: [
     Sentry.httpIntegration(),
     Sentry.expressIntegration(),
+    // Profiling integration for CPU profiles
+    nodeProfilingIntegration(),
+    // Console logging integration - captures console.* as Sentry Logs
+    Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error', 'info', 'debug'] }),
   ],
-  // Enable Sentry Logs
-  _experiments: {
-    enableLogs: true,
-  },
 });
 
 import express from 'express';

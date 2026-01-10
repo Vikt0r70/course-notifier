@@ -55,6 +55,7 @@ class FCMPushService {
         user.fcmToken = undefined;
         await user.save();
       } else {
+        // nosemgrep: unsafe-formatstring - user.id is internal database ID, not user input
         console.error(`📱 [FCM] Failed for user ${user.id}:`, error);
       }
       return false;

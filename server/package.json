@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@sentry/node": "^10.32.1",
+    "@sentry/profiling-node": "^10.32.1",
     "bcryptjs": "^2.4.3",
     "cheerio": "1.0.0-rc.10",
     "compression": "^1.7.4",

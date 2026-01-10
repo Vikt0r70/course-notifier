@@ -113,5 +113,6 @@ networks:
 
 volumes:
   postgres_data:
+    # Production volume - DO NOT CHANGE THIS NAME
     external: true
     name: course_notifier_final_postgres_data

@@ -178,6 +178,7 @@ class NotificationService {
           await this.sendBatchedNotifications(batch);
           console.log(`📧 [BATCH] Sent ${batch.changes.length} changes to user ${userId}`);
         } catch (error) {
+          // nosemgrep: unsafe-formatstring - userId is internal database ID, not user input
           console.error(`❌ Failed to send batch to user ${userId}:`, error);
         }
       }

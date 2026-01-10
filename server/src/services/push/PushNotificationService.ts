@@ -45,6 +45,7 @@ class PushNotificationService {
       console.log(`📱 [PUSH] Sent to user ${user.id}: ${title}`);
       return true;
     } catch (error) {
+      // nosemgrep: unsafe-formatstring - user.id is internal database ID, not user input
       console.error(`📱 [PUSH] Failed for user ${user.id}:`, error);
       return false;
     }
