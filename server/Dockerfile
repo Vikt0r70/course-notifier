@@ -29,6 +29,18 @@ RUN npm run build
 # Remove dev dependencies after build to reduce image size
 RUN npm prune --production
 
+# Security: Create non-root user with access to chromium
+# Add user to required groups for Chromium sandbox
+RUN addgroup -S appgroup && \
+    adduser -S appuser -G appgroup && \
+    # Chromium needs these directories writable
+    mkdir -p /home/appuser/.cache/puppeteer && \
+    chown -R appuser:appgroup /home/appuser && \
+    chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
+
 EXPOSE 5000
 
 CMD ["npm", "start"]

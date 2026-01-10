@@ -150,6 +150,8 @@ export const login = async (req: Request, res: Response) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: config.env === 'production',
+      sameSite: config.env === 'production' ? 'strict' : 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -265,6 +267,8 @@ export const verifyOtp = async (req: Request, res: Response) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: config.env === 'production',
+      sameSite: config.env === 'production' ? 'strict' : 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 

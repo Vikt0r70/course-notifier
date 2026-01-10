@@ -169,17 +169,15 @@ INSERT INTO system_settings (key, value, updated_at) VALUES
     ('next_scraper_run', '', NOW())
 ON CONFLICT (key) DO NOTHING;
 
--- Create admin user (password: admin123)
-INSERT INTO users (
-    email, username, password_hash, major, age, 
-    is_email_verified, is_admin, faculty, study_type,
-    created_at, updated_at
-)
-VALUES (
-    'admin@coursenotifier.com', 'admin', 
-    '$2a$10$MAm4e3MHn3xJeM6rBUgmGuOl0r03IwLO2yEhwOTIDONq4j08LV23G', 
-    'System Admin', 25, 
-    true, true, 'Administration', 'بكالوريوس',
-    NOW(), NOW()
-)
-ON CONFLICT (email) DO NOTHING;
+-- ============================================
+-- ADMIN USER
+-- ============================================
+-- SECURITY: Admin user is now created via ADMIN_PASSWORD environment variable
+-- The server will create the admin user on startup if ADMIN_PASSWORD is set
+-- This prevents hardcoded credentials in version control
+-- 
+-- To create an admin user:
+-- 1. Set ADMIN_PASSWORD environment variable in .env or docker-compose
+-- 2. The server will hash and create the admin user on first startup
+-- ============================================
+
