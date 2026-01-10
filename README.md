@@ -27,11 +27,7 @@ Course Notifier helps university students track course availability in real-time
 
 
 ## RoadMap
-- [x] When Opening Multiple Things in the Mobile Side Web Like the Side Bar and the For Instance the Profile Drop Down it should close the other and not all Open In the same Time 
-- [x] Making Sure that Filters are sticked after Rebuild and are triggered Right 
-- [x] Making Sure that Remove from Watch List and Add Are Smooth In The website and do not need Refresh Web Page  For Both PC and Mobile One 
-- [x] Adding a Fav Icon 
-- [x] Making Sure That It is compatible With Chrome, Firefox , and Safari Browsers 
+- [x] Fixing Some Bug in the Phone Views 
 - [ ] CI/CD : GitHub Actions for automated deployment 
 - [ ] Testing  :Add E2E tests with Playwright 
 - [ ] Performance : Code splitting to reduce bundle size 
