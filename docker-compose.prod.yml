@@ -124,6 +124,8 @@ services:
 
 volumes:
   postgres_data:
+    # Use named volume to persist data across project rebuilds
+    name: coursenotifier_postgres_data
 
 networks:
   coursenotifier-network:
