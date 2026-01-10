@@ -10,12 +10,16 @@ ARG VITE_SENTRY_DSN
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 
+# Copy ONLY package files first (better layer caching)
 COPY package*.json ./
 
-RUN npm install
+# Use npm ci for faster, reproducible installs
+RUN npm ci
 
+# Copy source code (this layer changes frequently)
 COPY . .
 
+# Build the app
 RUN npm run build
 
 FROM nginx:alpine
