@@ -84,3 +84,9 @@ docker-compose.local.yml
 # AI Agent instructions (local only)
 AGENTS.md
 .serena/
+serena/
+.opencode/
+
+# BMAD folders
+_bmad/
+Bmad output/
