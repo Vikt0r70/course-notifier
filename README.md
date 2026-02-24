@@ -245,6 +245,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Built for Zarqa University students
-- Inspired by the need for better course registration tools
-- Thanks to all contributors and testers
 
