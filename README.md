@@ -3,6 +3,7 @@
 > Real-time university course availability tracker with instant notifications
 
 
+
 **Note:** This project was originally built for Zarqa University (Jordan) but can be adapted for other universities. The scraper module is designed to be replaceable for different university registration systems.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -12,7 +13,15 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
 Course Notifier helps university students track course availability in real-time. The system automatically scrapes course data from the university registration system, detects when courses open or close, and sends instant notifications via email, web push, or mobile.
+<img width="1919" height="905" alt="Screenshot 2026-03-21 175116" src="https://github.com/user-attachments/assets/c59a649e-8050-4ed8-889f-2fdc6fbf965c" />
+<details>
+  <summary>More screenshots</summary>
 
+<img width="1902" height="911" alt="Screenshot 2026-03-21 175158" src="https://github.com/user-attachments/assets/96a5f548-e6b0-4938-a992-1eca6b3e09ef" />
+<img width="1900" height="849" alt="Screenshot 2026-03-21 175146" src="https://github.com/user-attachments/assets/eee76ca0-02c5-42ce-9c4b-f26472128d74" />
+<img width="1908" height="869" alt="Screenshot 2026-03-21 175132" src="https://github.com/user-attachments/assets/687da8d4-b248-4d1a-8368-a87c0559ba33" />
+<img width="1904" height="904" alt="Screenshot 2026-03-21 175222" src="https://github.com/user-attachments/assets/53e71bd8-2702-45b7-8341-6e45330220a1" />
+</details>
 ## Features
 
 - **Real-time Course Monitoring** - Automated scraping every 5 minutes
