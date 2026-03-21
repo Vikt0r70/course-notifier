@@ -22,6 +22,7 @@ Course Notifier helps university students track course availability in real-time
 <img width="1908" height="869" alt="Screenshot 2026-03-21 175132" src="https://github.com/user-attachments/assets/687da8d4-b248-4d1a-8368-a87c0559ba33" />
 <img width="1904" height="904" alt="Screenshot 2026-03-21 175222" src="https://github.com/user-attachments/assets/53e71bd8-2702-45b7-8341-6e45330220a1" />
 </details>
+
 ## Features
 
 - **Real-time Course Monitoring** - Automated scraping every 5 minutes
