@@ -26,36 +26,6 @@ Course Notifier helps university students track course availability in real-time
 - **RTL Support** - Full Arabic language support
 
 
-## RoadMap
-- [x] Fixing Some Bug in the Phone Views 
-- [ ] CI/CD : GitHub Actions for automated deployment 
-- [ ] Testing  :Add E2E tests with Playwright 
-- [ ] Performance : Code splitting to reduce bundle size 
-- [ ] Making an Android App 
-- [ ] Making an PWA Enhancement (Free iOS Alternative)
-		Add service worker for offline support
-		Add web app manifest for install ability
-		Add "Add to Home Screen" prompt
-		Test on iOS Safari
-		Optimize for mobile viewport
-- [ ] Phase 3: Plugin Architecture
-	    Design plugin interface/contract
-	    Create plugin loader system
-	    Refactor Zarqa scraper as first plugin
-	    Database changes (data sources table)
-	    Modify Course model for multi-source
-	    Admin UI for plugin management
-	    Documentation for creating plugins
-- [ ] Phase 4: AI-Assisted Integration
-	    AI tool to analyze university website structure
-	    Auto-generate plugin scaffolding
-	    Sandbox for testing generated scrapers
-	    Admin review and approval workflow
-- [ ] Phase 5: Multi-University Expansion
-	    Docker Compose packaging for self-hosting
-	    Installation documentation
-	    Create plugins for each new university(Locally Maybe)
-
 ## Tech Stack
 
 | Layer | Technology |
