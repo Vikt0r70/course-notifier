@@ -56,10 +56,9 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-query': ['@tanstack/react-query'],
+          'vendor-query': ['react-query'],
           'vendor-forms': ['react-hook-form'],
           'vendor-icons': ['lucide-react'],
-          'vendor-headlessui': ['@headlessui/react'],
         },
       },
     },
