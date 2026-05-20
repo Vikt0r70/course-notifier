@@ -145,7 +145,7 @@ Course_Notifier_Final/
 │   └── .env.example               # Environment template
 │
 ├── docker-compose.yml             # Docker orchestration (all services)
-├── docker-compose.prod.yml        # Production Docker config
+├── docker-compose.vps.yml         # VPS production Docker config
 ├── start.bat                      # Windows launcher script
 ├── start.sh                       # Linux/Mac launcher script
 ├── deploy.bat                     # Windows deployment script
