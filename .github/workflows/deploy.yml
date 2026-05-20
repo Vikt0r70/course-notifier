@@ -14,17 +14,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: 'npm'
 
       - name: Type-check server
-        working-directory: server
         run: |
+          cd server
           npm install
           npx tsc --noEmit
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
 
       - name: Type-check client
-        working-directory: client
         run: |
+          cd client
           npm install
           npx tsc --noEmit
 
