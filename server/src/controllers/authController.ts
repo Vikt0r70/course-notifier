@@ -170,13 +170,14 @@ export const login = async (req: Request, res: Response) => {
           studyType: user.studyType || 'بكالوريوس',
           timeShift: user.timeShift || 'الكل',
           major: user.major || '',
+          onboardingCompleted: user.onboardingCompleted,
+          avatarUrl: user.avatarUrl || null,
           // Global notification settings
           notifyOnOpen: user.notifyOnOpen ?? true,
           notifyOnClose: user.notifyOnClose ?? false,
           notifyOnSimilarCourse: user.notifyOnSimilarCourse ?? true,
           notifyByEmail: user.notifyByEmail ?? true,
           notifyByWeb: user.notifyByWeb ?? true,
-          notifyByPhone: user.notifyByPhone ?? false,
         },
       },
     });
@@ -287,13 +288,14 @@ export const verifyOtp = async (req: Request, res: Response) => {
           studyType: user.studyType || 'بكالوريوس',
           timeShift: user.timeShift || 'الكل',
           major: user.major || '',
+          onboardingCompleted: user.onboardingCompleted,
+          avatarUrl: user.avatarUrl || null,
           // Global notification settings
           notifyOnOpen: user.notifyOnOpen ?? true,
           notifyOnClose: user.notifyOnClose ?? false,
           notifyOnSimilarCourse: user.notifyOnSimilarCourse ?? true,
           notifyByEmail: user.notifyByEmail ?? true,
           notifyByWeb: user.notifyByWeb ?? true,
-          notifyByPhone: user.notifyByPhone ?? false,
         },
       },
     });
@@ -531,7 +533,6 @@ export const getProfile = async (req: any, res: Response) => {
         notifyOnSimilarCourse: user.notifyOnSimilarCourse ?? true,
         notifyByEmail: user.notifyByEmail ?? true,
         notifyByWeb: user.notifyByWeb ?? true,
-        notifyByPhone: user.notifyByPhone ?? false,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       }
@@ -748,7 +749,6 @@ export const getNotificationSettings = async (req: any, res: Response) => {
         notifyOnSimilarCourse: user.notifyOnSimilarCourse ?? true,
         notifyByEmail: user.notifyByEmail ?? true,
         notifyByWeb: user.notifyByWeb ?? true,
-        notifyByPhone: user.notifyByPhone ?? false,
       }
     });
   } catch (error: any) {
@@ -770,8 +770,7 @@ export const updateNotificationSettings = async (req: any, res: Response) => {
       notifyOnClose,
       notifyOnSimilarCourse,
       notifyByEmail,
-      notifyByWeb,
-      notifyByPhone
+      notifyByWeb
     } = req.body;
 
     // Update only provided fields
@@ -780,7 +779,6 @@ export const updateNotificationSettings = async (req: any, res: Response) => {
     if (notifyOnSimilarCourse !== undefined) user.notifyOnSimilarCourse = notifyOnSimilarCourse;
     if (notifyByEmail !== undefined) user.notifyByEmail = notifyByEmail;
     if (notifyByWeb !== undefined) user.notifyByWeb = notifyByWeb;
-    if (notifyByPhone !== undefined) user.notifyByPhone = notifyByPhone;
 
     await user.save();
 
@@ -793,7 +791,6 @@ export const updateNotificationSettings = async (req: any, res: Response) => {
         notifyOnSimilarCourse: user.notifyOnSimilarCourse,
         notifyByEmail: user.notifyByEmail,
         notifyByWeb: user.notifyByWeb,
-        notifyByPhone: user.notifyByPhone,
       }
     });
   } catch (error: any) {
@@ -802,87 +799,48 @@ export const updateNotificationSettings = async (req: any, res: Response) => {
   }
 };
 
-// Get push notification topic for mobile app
-export const getPushTopic = async (req: any, res: Response) => {
+export const saveOnboarding = async (req: any, res: Response) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Generate push topic secret if doesn't exist
-    if (!user.pushTopicSecret) {
-      user.pushTopicSecret = crypto.randomBytes(16).toString('hex');
-      await user.save();
+    const { age, studyType, faculty, major, timeShift, step } = req.body;
+
+    if (age !== undefined) user.age = age;
+    if (studyType) user.studyType = studyType;
+    if (faculty !== undefined) user.faculty = faculty;
+    if (major !== undefined) user.major = major;
+
+    if (studyType === 'بكالوريوس') {
+      user.timeShift = timeShift || 'الكل';
+    } else if (studyType) {
+      user.timeShift = 'الكل';
+    } else if (timeShift !== undefined) {
+      user.timeShift = timeShift;
     }
 
-    const ntfyPublicUrl = process.env.NTFY_PUBLIC_URL || 'https://ntfy.coursenotifier.studenthub.dedyn.io';
+    if (step === 'complete') {
+      user.onboardingCompleted = true;
+    }
+
+    await user.save();
 
     res.json({
       success: true,
+      message: step === 'complete' ? 'Onboarding completed' : 'Step saved',
       data: {
-        topic: `cn-${user.pushTopicSecret}`,
-        serverUrl: ntfyPublicUrl,
-        subscribeUrl: `${ntfyPublicUrl}/cn-${user.pushTopicSecret}`,
-      }
+        age: user.age,
+        studyType: user.studyType,
+        faculty: user.faculty || '',
+        major: user.major || '',
+        timeShift: user.timeShift || 'الكل',
+        onboardingCompleted: user.onboardingCompleted,
+      },
     });
   } catch (error: any) {
-    console.error('Get push topic error:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Register FCM device token for push notifications
-export const registerDevice = async (req: any, res: Response) => {
-  try {
-    const { fcmToken } = req.body;
-
-    if (!fcmToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'FCM token is required' 
-      });
-    }
-
-    const user = await User.findByPk(req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    user.fcmToken = fcmToken;
-    await user.save();
-
-    console.log(`📱 [FCM] Device registered for user ${user.id}`);
-
-    res.json({
-      success: true,
-      message: 'Device registered successfully'
-    });
-  } catch (error: any) {
-    console.error('Register device error:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Unregister FCM device token (on logout)
-export const unregisterDevice = async (req: any, res: Response) => {
-  try {
-    const user = await User.findByPk(req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    user.fcmToken = undefined;
-    await user.save();
-
-    console.log(`📱 [FCM] Device unregistered for user ${user.id}`);
-
-    res.json({
-      success: true,
-      message: 'Device unregistered successfully'
-    });
-  } catch (error: any) {
-    console.error('Unregister device error:', error);
+    console.error('Save onboarding error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

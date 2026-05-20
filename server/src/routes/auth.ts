@@ -1,9 +1,14 @@
 import { Router } from 'express';
 import * as authController from '../controllers/authController';
+import * as oauthController from '../controllers/oauthController';
 import { validate, registerSchema, loginSchema, notificationSettingsSchema } from '../middleware/validator';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
+
+// Google OAuth
+router.get('/google', oauthController.googleAuth);
+router.get('/google/callback', oauthController.googleCallback);
 
 router.post('/register', validate(registerSchema), authController.register);
 router.post('/login', validate(loginSchema), authController.login);
@@ -24,12 +29,6 @@ router.post('/resend-verification', authenticate, authController.resendVerificat
 // Global notification settings endpoints
 router.get('/notification-settings', authenticate, authController.getNotificationSettings);
 router.put('/notification-settings', authenticate, validate(notificationSettingsSchema), authController.updateNotificationSettings);
-
-// Push notification topic for mobile app (legacy - ntfy)
-router.get('/push-topic', authenticate, authController.getPushTopic);
-
-// FCM device registration endpoints
-router.post('/register-device', authenticate, authController.registerDevice);
-router.delete('/unregister-device', authenticate, authController.unregisterDevice);
+router.put('/onboarding', authenticate, authController.saveOnboarding);
 
 export default router;

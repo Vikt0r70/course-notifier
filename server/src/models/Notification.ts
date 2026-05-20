@@ -14,12 +14,11 @@ interface NotificationAttributes {
   isRead: boolean;
   sentByEmail: boolean;
   sentByWeb: boolean;
-  sentByPhone: boolean;
   createdAt?: Date;
 }
 
 interface NotificationCreationAttributes
-  extends Optional<NotificationAttributes, 'id' | 'isRead' | 'sentByEmail' | 'sentByWeb' | 'sentByPhone'> {}
+  extends Optional<NotificationAttributes, 'id' | 'isRead' | 'sentByEmail' | 'sentByWeb'> {}
 
 class Notification
   extends Model<NotificationAttributes, NotificationCreationAttributes>
@@ -35,7 +34,6 @@ class Notification
   public isRead!: boolean;
   public sentByEmail!: boolean;
   public sentByWeb!: boolean;
-  public sentByPhone!: boolean;
   public readonly createdAt!: Date;
 }
 
@@ -98,11 +96,6 @@ Notification.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       field: 'sent_by_web',
-    },
-    sentByPhone: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      field: 'sent_by_phone',
     },
     createdAt: {
       type: DataTypes.DATE,

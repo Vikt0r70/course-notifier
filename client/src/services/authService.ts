@@ -94,4 +94,9 @@ export const authService = {
     const response = await api.put('/auth/notification-settings', settings);
     return response.data;
   },
+
+  async saveOnboarding(data: Partial<User> & { step?: string }) {
+    const response = await api.put('/auth/onboarding', data);
+    return response.data;
+  },
 };

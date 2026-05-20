@@ -11,7 +11,9 @@ import {
   ChevronDown,
   Menu,
   X,
-  AlertCircle
+  AlertCircle,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 // NotificationBell removed - users access notifications via nav link
 import ReportProblemModal from '../components/ReportProblemModal';
@@ -19,7 +21,7 @@ import { cn } from '../components/ui/utils';
 import { Avatar } from '../components/ui';
 
 const MainLayout: React.FC = () => {
-  const { user, logout } = useAuthStore();
+  const { user, isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -66,122 +68,141 @@ const MainLayout: React.FC = () => {
             <div className="flex items-center gap-8">
               {/* Logo */}
               <Link 
-                to="/dashboard" 
+                to={isAuthenticated ? "/dashboard" : "/"}
                 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:opacity-80 transition"
               >
                 Course Notifier
               </Link>
 
-              {/* Desktop Nav Links */}
-              <div className="hidden md:flex items-center gap-1">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200',
-                      isActiveLink(link.to)
-                        ? 'text-cyan-400 bg-cyan-500/10'
-                        : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
-                    )}
-                  >
-                    <link.icon className="w-4 h-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+              {/* Desktop Nav Links - only for authenticated users */}
+              {isAuthenticated && (
+                <div className="hidden md:flex items-center gap-1">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className={cn(
+                        'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200',
+                        isActiveLink(link.to)
+                          ? 'text-cyan-400 bg-cyan-500/10'
+                          : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
+                      )}
+                    >
+                      <link.icon className="w-4 h-4" />
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Right side - Actions */}
             <div className="flex items-center gap-3">
 
-              {/* Report Problem Button - Icon only on mobile/tablet, full text on desktop */}
-              <button
-                onClick={() => setShowReportModal(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/30 transition-all group"
-                title="Report a Problem"
-              >
-                <AlertCircle className="w-4 h-4 text-amber-400" />
-                <span className="hidden lg:block text-sm font-medium text-amber-400">Report Issue</span>
-              </button>
-
-              {/* User Dropdown */}
-              <div className="relative" ref={userMenuRef}>
+              {/* Report Problem Button - only for authenticated users */}
+              {isAuthenticated && (
                 <button
-                  onClick={() => {
-                    setIsUserMenuOpen(!isUserMenuOpen);
-                    // Close mobile menu when opening user menu
-                    if (!isUserMenuOpen) setIsMobileMenuOpen(false);
-                  }}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200',
-                    'hover:bg-zinc-800/50',
-                    isUserMenuOpen && 'bg-zinc-800/50'
-                  )}
+                  onClick={() => setShowReportModal(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/30 transition-all group"
+                  title="Report a Problem"
                 >
-                  <Avatar size="sm" fallback={user?.username || 'U'} />
-                  <span className="hidden sm:block text-sm font-medium text-zinc-100">
-                    {user?.username}
-                  </span>
-                  <ChevronDown className={cn(
-                    'w-4 h-4 text-zinc-400 transition-transform duration-200',
-                    isUserMenuOpen && 'rotate-180'
-                  )} />
+                  <AlertCircle className="w-4 h-4 text-amber-400" />
+                  <span className="hidden lg:block text-sm font-medium text-amber-400">Report Issue</span>
                 </button>
+              )}
 
-                {/* Dropdown Menu */}
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 py-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl shadow-glass animate-fade-in">
-                    {/* User Info */}
-                    <div className="px-4 py-3 border-b border-zinc-800/50">
-                      <p className="text-sm font-medium text-zinc-100">{user?.username}</p>
-                      <p className="text-xs text-zinc-400 truncate">{user?.email}</p>
-                      {user?.isAdmin && (
-                        <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-amber-500/20 text-amber-400 rounded-full">
-                          Admin
-                        </span>
-                      )}
-                    </div>
+              {/* Not Authenticated — Show Sign In / Sign Up */}
+              {!isAuthenticated && (
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/login"
+                    className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 rounded-lg transition-colors"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Sign Up
+                  </Link>
+                </div>
+              )}
 
-                    {/* Menu Items */}
-                    <div className="py-1">
-                      <Link
-                        to="/profile"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors"
-                      >
-                        <User className="w-4 h-4" />
-                        Profile Settings
-                      </Link>
+              {/* User Dropdown - only for authenticated users */}
+              {isAuthenticated && (
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => {
+                      setIsUserMenuOpen(!isUserMenuOpen);
+                      if (!isUserMenuOpen) setIsMobileMenuOpen(false);
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200',
+                      'hover:bg-zinc-800/50',
+                      isUserMenuOpen && 'bg-zinc-800/50'
+                    )}
+                  >
+                    <Avatar size="sm" fallback={user?.username || 'U'} />
+                    <span className="hidden sm:block text-sm font-medium text-zinc-100">
+                      {user?.username}
+                    </span>
+                    <ChevronDown className={cn(
+                      'w-4 h-4 text-zinc-400 transition-transform duration-200',
+                      isUserMenuOpen && 'rotate-180'
+                    )} />
+                  </button>
 
-                      {user?.isAdmin && (
+                  {/* Dropdown Menu */}
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-56 py-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl shadow-glass animate-fade-in">
+                      <div className="px-4 py-3 border-b border-zinc-800/50">
+                        <p className="text-sm font-medium text-zinc-100">{user?.username}</p>
+                        <p className="text-xs text-zinc-400 truncate">{user?.email}</p>
+                        {user?.isAdmin && (
+                          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-amber-500/20 text-amber-400 rounded-full">
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      <div className="py-1">
                         <Link
-                          to="/admin"
+                          to="/profile"
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors"
                         >
-                          <Settings className="w-4 h-4" />
-                          Admin Panel
+                          <User className="w-4 h-4" />
+                          Profile Settings
                         </Link>
-                      )}
+                        {user?.isAdmin && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2 text-sm text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
+                          >
+                            <Settings className="w-4 h-4" />
+                            Admin Panel
+                          </Link>
+                        )}
+                      </div>
+                      <div className="border-t border-zinc-800/50 pt-1 mt-1">
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            handleLogout();
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Logout */}
-                    <div className="border-t border-zinc-800/50 pt-1 mt-1">
-                      <button
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          handleLogout();
-                        }}
-                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Mobile Menu Button */}
               <button
@@ -199,7 +220,7 @@ const MainLayout: React.FC = () => {
         </div>
 
         {/* Mobile Nav Menu */}
-        {isMobileMenuOpen && (
+        {isMobileMenuOpen && isAuthenticated && (
           <div className="md:hidden border-t border-zinc-800/50 bg-zinc-900/95 backdrop-blur-xl animate-fade-in">
             <div className="container mx-auto px-4 py-3 space-y-1">
               {navLinks.map((link) => (

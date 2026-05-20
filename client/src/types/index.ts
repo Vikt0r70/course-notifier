@@ -7,15 +7,16 @@ export interface User {
   faculty: string;
   studyType: string;
   timeShift?: string;
-  major?: string; // Now optional for graduate students
-  age?: number; // Now optional
+  major?: string;
+  age?: number;
+  onboardingCompleted?: boolean;
+  avatarUrl?: string | null;
   // Global notification settings
   notifyOnOpen?: boolean;
   notifyOnClose?: boolean;
   notifyOnSimilarCourse?: boolean;
   notifyByEmail?: boolean;
   notifyByWeb?: boolean;
-  notifyByPhone?: boolean;
 }
 
 // Global notification settings type for API updates
@@ -25,7 +26,6 @@ export interface NotificationSettings {
   notifyOnSimilarCourse: boolean;
   notifyByEmail: boolean;
   notifyByWeb: boolean;
-  notifyByPhone: boolean;
 }
 
 export interface Course {

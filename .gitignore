@@ -36,6 +36,8 @@ Thumbs.db
 
 # Testing
 coverage/
+playwright-report/
+test-results/
 
 # Database
 postgres_data/

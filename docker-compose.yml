@@ -68,6 +68,9 @@ services:
       SMTP_BACKUP_FROM: ${SMTP_BACKUP_FROM:-}
       NODE_OPTIONS: --max-old-space-size=512
       SENTRY_DSN: ${SENTRY_DSN:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
     depends_on:
       postgres:
         condition: service_healthy

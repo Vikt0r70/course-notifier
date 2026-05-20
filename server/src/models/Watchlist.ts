@@ -15,7 +15,6 @@ interface WatchlistAttributes {
   notifyOnSimilarCourse: boolean;
   notifyByEmail: boolean;
   notifyByWeb: boolean;
-  notifyByPhone: boolean;
   // Similar course filter settings
   // Each filter is a {days, times} object - user picks days pattern, then available times for that pattern
   // Example: [{"days": "ن ر", "times": ["08:00 AM   إلى   09:30 AM"]}, {"days": "ح ث خ", "times": ["11:00 AM   إلى   12:00 AM"]}]
@@ -28,7 +27,7 @@ interface WatchlistAttributes {
 interface WatchlistCreationAttributes
   extends Optional<
     WatchlistAttributes,
-    'id' | 'notifyOnOpen' | 'notifyOnClose' | 'notifyOnSimilarCourse' | 'notifyByEmail' | 'notifyByWeb' | 'notifyByPhone' | 'similarFilters' | 'similarFilterNewlyOpened'
+    'id' | 'notifyOnOpen' | 'notifyOnClose' | 'notifyOnSimilarCourse' | 'notifyByEmail' | 'notifyByWeb' | 'similarFilters' | 'similarFilterNewlyOpened'
   > {}
 
 class Watchlist extends Model<WatchlistAttributes, WatchlistCreationAttributes> implements WatchlistAttributes {
@@ -44,7 +43,6 @@ class Watchlist extends Model<WatchlistAttributes, WatchlistCreationAttributes> 
   public notifyOnSimilarCourse!: boolean;
   public notifyByEmail!: boolean;
   public notifyByWeb!: boolean;
-  public notifyByPhone!: boolean;
   // Similar course filter settings
   public similarFilters?: Array<{ days: string; times: string[] }>;
   public similarFilterNewlyOpened!: boolean;
@@ -113,11 +111,6 @@ Watchlist.init(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
       field: 'notify_by_web',
-    },
-    notifyByPhone: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      field: 'notify_by_phone',
     },
     // Similar course filter settings
     // JSONB array of {days: string, times: string[]} objects

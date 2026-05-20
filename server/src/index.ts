@@ -42,7 +42,6 @@ import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import ScraperScheduler from './services/scraper/ScraperScheduler';
 import { ScraperLog } from './models';
-import FirebaseService from './services/firebase/FirebaseService';
 
 const app = express();
 
@@ -79,9 +78,6 @@ const startServer = async () => {
     console.log('✅ Database connected');
 
     await connectRedis();
-
-    // Initialize Firebase for FCM push notifications
-    FirebaseService.initialize();
 
     // Mark any incomplete scraper logs as failed on startup
     const incompleteLogs = await ScraperLog.findAll({

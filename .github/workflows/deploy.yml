@@ -1,0 +1,46 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Type-check server
+        working-directory: server
+        run: |
+          npm ci
+          npx tsc --noEmit
+
+      - name: Type-check client
+        working-directory: client
+        run: |
+          npm ci
+          npx tsc --noEmit
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 152.53.184.198
+          username: viktor
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/apps/course-notifier-stable
+            git pull
+            docker compose -f docker-compose.vps.yml --env-file .env.docker build --no-cache
+            docker compose -f docker-compose.vps.yml --env-file .env.docker up -d
+            docker compose -f docker-compose.vps.yml --env-file .env.docker ps

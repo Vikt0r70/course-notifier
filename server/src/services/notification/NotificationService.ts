@@ -1,6 +1,5 @@
 import { Notification, Watchlist, User, Course } from '../../models';
 import EmailService from '../email/EmailService';
-import FCMPushService from '../push/FCMPushService';
 import redisClient from '../../database/redis';
 import { Op } from 'sequelize';
 
@@ -352,16 +351,6 @@ class NotificationService {
         console.log(`📧 [EMAIL] Sent batched notification to ${user.email} (${changes.length} courses)`);
       } catch (error) {
         console.error(`Failed to send batched email to ${user.email}:`, error);
-      }
-    }
-
-    // Send push notification with count
-    if (user.notifyByPhone) {
-      try {
-        await FCMPushService.sendBatchedNotification(user, changes.length);
-        console.log(`📱 [PUSH] Sent push to user ${user.id} (${changes.length} courses)`);
-      } catch (error) {
-        console.error(`Failed to send push to user ${user.id}:`, error);
       }
     }
   }

@@ -26,8 +26,15 @@ const Dashboard: React.FC = () => {
     timeShift: user?.timeShift || '',
     search: '',
     page: 1,
-    limit: 1000, // Fetch more courses for client-side filtering
+    limit: 1000,
   }));
+
+  // Debounced search to avoid API calls on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(filters.search || ''), 300);
+    return () => clearTimeout(timer);
+  }, [filters.search]);
 
   // Update filters when user data loads
   useEffect(() => {
@@ -50,17 +57,18 @@ const Dashboard: React.FC = () => {
     }
   );
 
-  // Fetch courses based on dropdown filters ONLY (not search)
-  // This allows search to be instant client-side filtering
+  // Fetch courses - with server-side search when user types
+  // When search is empty: fetch up to 1000 courses for fast browsing
+  // When search is active: server searches ALL courses via Op.iLike
   const { data: coursesData, isLoading } = useQuery(
-    ['courses', filters.studyType, filters.faculty, filters.timeShift],
+    ['courses', filters.studyType, filters.faculty, filters.timeShift, debouncedSearch],
     () => courseService.getCourses({
       studyType: filters.studyType,
       faculty: filters.faculty,
       timeShift: filters.timeShift,
-      search: '', // Always fetch without search - we filter client-side
+      search: debouncedSearch,
       page: 1,
-      limit: 1000, // Get all courses for the selected filters
+      limit: debouncedSearch ? 1000 : 1000,
     }),
     {
       staleTime: 30000, // Cache for 30 seconds
@@ -70,28 +78,11 @@ const Dashboard: React.FC = () => {
 
   const { data: stats } = useQuery('courseStats', courseService.getStats);
 
-  // Client-side search filtering - INSTANT, no network request
+  // When search is active, server already filtered via Op.iLike
+  // When search is empty, all fetched courses are shown
   const filteredCourses = useMemo(() => {
-    const courses = coursesData?.courses || [];
-    
-    if (!filters.search || !filters.search.trim()) {
-      return courses;
-    }
-
-    const searchTerms = filters.search.toLowerCase().trim().split(/\s+/);
-    
-    return courses.filter((course: Course) => {
-      const searchableText = [
-        course.courseName,
-        course.courseCode,
-        course.instructor,
-        course.section,
-      ].filter(Boolean).join(' ').toLowerCase();
-
-      // All search terms must match (AND logic)
-      return searchTerms.every(term => searchableText.includes(term));
-    });
-  }, [coursesData?.courses, filters.search]);
+    return coursesData?.courses || [];
+  }, [coursesData?.courses]);
 
   // Client-side pagination of filtered results
   const paginatedCourses = useMemo(() => {
@@ -147,9 +138,9 @@ const Dashboard: React.FC = () => {
     if (key === 'studyType') {
       setFilters((prev) => ({ ...prev, studyType: value, faculty: '', timeShift: '', search: '', page: 1 }));
     } 
-    // When faculty changes, reset page
+    // When faculty changes, reset timeShift and page
     else if (key === 'faculty') {
-      setFilters((prev) => ({ ...prev, faculty: value, page: 1 }));
+      setFilters((prev) => ({ ...prev, faculty: value, timeShift: '', page: 1 }));
     }
     // When search changes, reset to page 1 (but no network request!)
     else if (key === 'search') {

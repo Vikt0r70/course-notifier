@@ -21,15 +21,16 @@ interface UserAttributes {
   faculty?: string;
   studyType: string;
   timeShift?: string;
+  // Google OAuth
+  googleId?: string | null;
+  avatarUrl?: string | null;
+  onboardingCompleted: boolean;
   // Global notification settings
   notifyOnOpen: boolean;
   notifyOnClose: boolean;
   notifyOnSimilarCourse: boolean;
   notifyByEmail: boolean;
   notifyByWeb: boolean;
-  notifyByPhone: boolean;
-  fcmToken?: string;
-  pushTopicSecret?: string;
   lastVerificationEmailSent?: Date;
   verificationEmailsToday?: number;
   verificationEmailCountResetDate?: Date;
@@ -37,7 +38,7 @@ interface UserAttributes {
   updatedAt?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'isEmailVerified' | 'isAdmin' | 'watchAllCourses' | 'major' | 'age' | 'notifyOnOpen' | 'notifyOnClose' | 'notifyOnSimilarCourse' | 'notifyByEmail' | 'notifyByWeb' | 'notifyByPhone'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'isEmailVerified' | 'isAdmin' | 'watchAllCourses' | 'major' | 'age' | 'onboardingCompleted' | 'notifyOnOpen' | 'notifyOnClose' | 'notifyOnSimilarCourse' | 'notifyByEmail' | 'notifyByWeb'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
@@ -59,15 +60,17 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public faculty?: string;
   public studyType!: string;
   public timeShift?: string;
+  // Google OAuth
+  public googleId?: string | null;
+  public avatarUrl?: string | null;
+  public onboardingCompleted!: boolean;
   // Global notification settings
   public notifyOnOpen!: boolean;
   public notifyOnClose!: boolean;
   public notifyOnSimilarCourse!: boolean;
   public notifyByEmail!: boolean;
   public notifyByWeb!: boolean;
-  public notifyByPhone!: boolean;
-  public fcmToken?: string;
-  public pushTopicSecret?: string;
+
   public lastVerificationEmailSent?: Date;
   public verificationEmailsToday?: number;
   public verificationEmailCountResetDate?: Date;
@@ -203,19 +206,25 @@ User.init(
       defaultValue: true,
       field: 'notify_by_web',
     },
-    notifyByPhone: {
+
+    // Google OAuth
+    googleId: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      unique: true,
+      field: 'google_id',
+    },
+    avatarUrl: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      field: 'avatar_url',
+    },
+    onboardingCompleted: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      field: 'notify_by_phone',
+      field: 'onboarding_completed',
     },
-    fcmToken: {
-      type: DataTypes.STRING(255),
-      field: 'fcm_token',
-    },
-    pushTopicSecret: {
-      type: DataTypes.STRING(64),
-      field: 'push_topic_secret',
-    },
+
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

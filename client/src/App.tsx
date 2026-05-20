@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
@@ -8,21 +8,23 @@ import { PageSpinner } from './components/ui';
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
-import Watchlist from './pages/Watchlist';
-import Profile from './pages/Profile';
-import Notifications from './pages/Notifications';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminCourses from './pages/admin/AdminCourses';
-import AdminWatchlists from './pages/admin/AdminWatchlists';
-import AdminReports from './pages/admin/AdminReports';
-import AdminSettings from './pages/admin/AdminSettings';
-import VerifyEmail from './pages/VerifyEmail';
+const Login = React.lazy(() => import('./pages/Login'));
+const Register = React.lazy(() => import('./pages/Register'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
+const Landing = React.lazy(() => import('./pages/Landing'));
+const Onboarding = React.lazy(() => import('./pages/Onboarding'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Watchlist = React.lazy(() => import('./pages/Watchlist'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const Notifications = React.lazy(() => import('./pages/Notifications'));
+const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminUsers = React.lazy(() => import('./pages/admin/AdminUsers'));
+const AdminCourses = React.lazy(() => import('./pages/admin/AdminCourses'));
+const AdminWatchlists = React.lazy(() => import('./pages/admin/AdminWatchlists'));
+const AdminReports = React.lazy(() => import('./pages/admin/AdminReports'));
+const AdminSettings = React.lazy(() => import('./pages/admin/AdminSettings'));
+const VerifyEmail = React.lazy(() => import('./pages/VerifyEmail'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,6 +84,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <Suspense fallback={<PageSpinner message="Loading..." />}>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -90,20 +93,28 @@ function App() {
           <Route path="/reset-password/:token" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route path="/verify-email" element={<VerifyEmail />} />
 
-          {/* Protected Routes */}
+          {/* Public route - landing page (no auth required) */}
           <Route
             path="/"
+            element={<MainLayout />}
+          >
+            <Route index element={<Landing />} />
+          </Route>
+
+          {/* Protected Routes - authenticated users only */}
+          <Route
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <MainLayout />
               </PrivateRoute>
             }
           >
-            <Route index element={<Navigate to="/dashboard" />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route index element={<Dashboard />} />
             <Route path="watchlist" element={<Watchlist />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="onboarding" element={<Onboarding />} />
           </Route>
 
           {/* Admin Routes */}
@@ -126,6 +137,7 @@ function App() {
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
+        </Suspense>
         <Toaster 
           position="top-center"
           toastOptions={{

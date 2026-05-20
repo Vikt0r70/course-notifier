@@ -52,7 +52,6 @@ export const watchlistSchema = Joi.object({
   notifyOnSimilarCourse: Joi.boolean().optional(),
   notifyByEmail: Joi.boolean().optional(),
   notifyByWeb: Joi.boolean().optional(),
-  notifyByPhone: Joi.boolean().optional(),
 });
 
 // Schema for updating global notification settings (on User)

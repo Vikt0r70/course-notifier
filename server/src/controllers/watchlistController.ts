@@ -33,7 +33,7 @@ export const getWatchlist = async (req: AuthRequest, res: Response) => {
 
 export const addToWatchlist = async (req: AuthRequest, res: Response) => {
   try {
-    const { courseCode, section, courseName, faculty, instructor, notifyOnOpen, notifyOnClose, notifyOnSimilarCourse, notifyByEmail, notifyByWeb, notifyByPhone } = req.body;
+    const { courseCode, section, courseName, faculty, instructor, notifyOnOpen, notifyOnClose, notifyOnSimilarCourse, notifyByEmail, notifyByWeb } = req.body;
 
     const existing = await Watchlist.findOne({
       where: { userId: req.user!.id, courseCode, section },
@@ -55,7 +55,6 @@ export const addToWatchlist = async (req: AuthRequest, res: Response) => {
       notifyOnSimilarCourse: notifyOnSimilarCourse !== undefined ? notifyOnSimilarCourse : true,
       notifyByEmail: notifyByEmail !== undefined ? notifyByEmail : true,
       notifyByWeb: notifyByWeb !== undefined ? notifyByWeb : true,
-      notifyByPhone: notifyByPhone !== undefined ? notifyByPhone : false,
     });
 
     res.status(201).json({ success: true, message: 'Course added to watchlist', data: watchlist });
@@ -69,7 +68,7 @@ export const updateWatchlistSettings = async (req: AuthRequest, res: Response) =
     const { id } = req.params;
     const { 
       // Deprecated per-watchlist settings (kept for backwards compatibility)
-      notifyOnOpen, notifyOnClose, notifyOnSimilarCourse, notifyByEmail, notifyByWeb, notifyByPhone,
+      notifyOnOpen, notifyOnClose, notifyOnSimilarCourse, notifyByEmail, notifyByWeb,
       // New similar course filter settings
       similarFilters, similarFilterNewlyOpened 
     } = req.body;
@@ -91,7 +90,6 @@ export const updateWatchlistSettings = async (req: AuthRequest, res: Response) =
     if (notifyOnSimilarCourse !== undefined) updateData.notifyOnSimilarCourse = notifyOnSimilarCourse;
     if (notifyByEmail !== undefined) updateData.notifyByEmail = notifyByEmail;
     if (notifyByWeb !== undefined) updateData.notifyByWeb = notifyByWeb;
-    if (notifyByPhone !== undefined) updateData.notifyByPhone = notifyByPhone;
     
     // New filter fields
     if (similarFilters !== undefined) updateData.similarFilters = similarFilters;

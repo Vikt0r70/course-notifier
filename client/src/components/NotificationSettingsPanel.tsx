@@ -5,7 +5,6 @@ import {
   Settings, 
   Mail, 
   Bell, 
-  Smartphone,
   DoorOpen,
   DoorClosed,
   Copy
@@ -24,7 +23,6 @@ const NotificationSettingsPanel: React.FC = () => {
     notifyOnSimilarCourse: true,
     notifyByEmail: true,
     notifyByWeb: true,
-    notifyByPhone: false,
   });
 
   // Fetch current settings from server
@@ -138,13 +136,6 @@ const NotificationSettingsPanel: React.FC = () => {
               onChange={(checked) => handleSettingChange('notifyByWeb', checked)}
               label="Web notification"
               icon={Bell}
-              disabled={updateMutation.isLoading}
-            />
-            <Toggle
-              checked={settings.notifyByPhone}
-              onChange={(checked) => handleSettingChange('notifyByPhone', checked)}
-              label="Phone App"
-              icon={Smartphone}
               disabled={updateMutation.isLoading}
             />
           </div>

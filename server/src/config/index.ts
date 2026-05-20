@@ -32,6 +32,12 @@ export default {
     url: process.env.CLIENT_URL || 'http://localhost:3000',
   },
   
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/auth/google/callback',
+  },
+  
   scraper: {
     intervalMinutes: parseInt(process.env.SCRAPER_INTERVAL_MINUTES || '60', 10),
     autoSync: process.env.SCRAPER_AUTO_SYNC === 'true',
