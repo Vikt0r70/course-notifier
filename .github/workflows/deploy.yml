@@ -7,6 +7,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workspace: [server, client]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,18 +20,14 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Type-check server
-        run: |
-          cd server
-          npm install
-          npx tsc --noEmit
+      - name: Install dependencies
+        run: npm ci
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
 
-      - name: Type-check client
+      - name: Type-check ${{ matrix.workspace }}
         run: |
-          cd client
-          npm install
+          cd ${{ matrix.workspace }}
           npx tsc --noEmit
 
   deploy:
