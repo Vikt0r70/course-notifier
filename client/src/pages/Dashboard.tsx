@@ -26,7 +26,7 @@ const Dashboard: React.FC = () => {
     timeShift: user?.timeShift || '',
     search: '',
     page: 1,
-    limit: 1000,
+    limit: 5000,
   }));
 
   // Debounced search to avoid API calls on every keystroke
@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
       timeShift: filters.timeShift,
       search: debouncedSearch,
       page: 1,
-      limit: debouncedSearch ? 1000 : 1000,
+      limit: 5000,
     }),
     {
       staleTime: 30000, // Cache for 30 seconds
@@ -94,14 +94,14 @@ const Dashboard: React.FC = () => {
 
   // Calculate pagination info
   const paginationInfo = useMemo(() => {
-    const totalItems = filteredCourses.length;
+    const totalItems = coursesData?.pagination?.total || filteredCourses.length;
     const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
     return {
       page: filters.page || 1,
       pages: totalPages,
       total: totalItems,
     };
-  }, [filteredCourses.length, filters.page]);
+  }, [filteredCourses.length, coursesData?.pagination?.total, filters.page]);
 
   const toggleWatchMutation = useMutation(
     async (course: Course) => {
@@ -193,7 +193,7 @@ const Dashboard: React.FC = () => {
             Showing{' '}
             <span className="text-cyan-400 font-medium">{paginatedCourses.length}</span>
             {' '}of{' '}
-            <span className="text-cyan-400 font-medium">{filteredCourses.length}</span>
+            <span className="text-cyan-400 font-medium">{paginationInfo.total}</span>
             {' '}courses
             {filters.search && (
               <span className="text-zinc-500"> (filtered from {coursesData?.courses?.length || 0})</span>
