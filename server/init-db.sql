@@ -38,9 +38,10 @@ CREATE TABLE IF NOT EXISTS users (
     notify_on_similar_course BOOLEAN DEFAULT TRUE,
     notify_by_email BOOLEAN DEFAULT TRUE,
     notify_by_web BOOLEAN DEFAULT TRUE,
-    notify_by_phone BOOLEAN DEFAULT FALSE,
-    push_topic_secret VARCHAR(64),
-    fcm_token VARCHAR(255)
+    -- Google OAuth
+    google_id VARCHAR(255),
+    avatar_url VARCHAR(500),
+    onboarding_completed BOOLEAN DEFAULT FALSE
 );
 
 -- ============================================
@@ -84,7 +85,6 @@ CREATE TABLE IF NOT EXISTS watchlists (
     notify_on_similar_course BOOLEAN DEFAULT TRUE,
     notify_by_email BOOLEAN DEFAULT TRUE,
     notify_by_web BOOLEAN DEFAULT TRUE,
-    notify_by_phone BOOLEAN DEFAULT FALSE,
     added_at TIMESTAMP WITH TIME ZONE,
     similar_filters JSONB,
     similar_filter_newly_opened BOOLEAN DEFAULT FALSE,
@@ -105,7 +105,6 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read BOOLEAN DEFAULT FALSE,
     sent_by_email BOOLEAN DEFAULT FALSE,
     sent_by_web BOOLEAN DEFAULT FALSE,
-    sent_by_phone BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE
 );
 

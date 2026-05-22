@@ -109,11 +109,6 @@ export const googleCallback = async (req: Request, res: Response) => {
       const token = signToken(user);
       setAuthCookie(res, token);
 
-      if (!user.onboardingCompleted) {
-        user.onboardingCompleted = true;
-        await user.save();
-      }
-
       const redirectUrl = user.onboardingCompleted
         ? `${config.client.url}/dashboard`
         : `${config.client.url}/onboarding`;
