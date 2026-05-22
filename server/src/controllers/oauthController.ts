@@ -33,7 +33,7 @@ const setAuthCookie = (res: Response, token: string) => {
   res.cookie('token', token, {
     httpOnly: true,
     secure: config.env === 'production',
-    sameSite: config.env === 'production' ? 'strict' : 'lax',
+    sameSite: 'lax',
     path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -110,8 +110,8 @@ export const googleCallback = async (req: Request, res: Response) => {
       setAuthCookie(res, token);
 
       const redirectUrl = user.onboardingCompleted
-        ? `${config.client.url}/dashboard`
-        : `${config.client.url}/onboarding`;
+        ? `${config.client.url}/dashboard?token=${token}`
+        : `${config.client.url}/onboarding?token=${token}`;
       return res.redirect(redirectUrl);
     }
 
@@ -131,7 +131,7 @@ export const googleCallback = async (req: Request, res: Response) => {
     const token = signToken(user);
     setAuthCookie(res, token);
 
-    res.redirect(`${config.client.url}/onboarding`);
+    res.redirect(`${config.client.url}/onboarding?token=${token}`);
   } catch (error: any) {
     console.error('Google OAuth callback error:', error);
     res.redirect(`${config.client.url}/login?error=google_auth_failed`);

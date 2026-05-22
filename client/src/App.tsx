@@ -77,7 +77,15 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 function App() {
   const loadUser = useAuthStore((state) => state.loadUser);
 
+  // Pick up token from OAuth callback redirect URL
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('token', token);
+      // Clean URL without reloading page
+      window.history.replaceState({}, '', window.location.pathname);
+    }
     loadUser();
   }, [loadUser]);
 
