@@ -24,7 +24,7 @@ const Landing: React.FC = () => {
     timeShift: '',
     search: '',
     page: 1,
-    limit: 1000,
+    limit: 5000,
   });
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -47,7 +47,7 @@ const Landing: React.FC = () => {
       timeShift: filters.timeShift,
       search: debouncedSearch,
       page: 1,
-      limit: 1000,
+      limit: 5000,
     }),
     { staleTime: 30000, keepPreviousData: true }
   );
@@ -65,7 +65,7 @@ const Landing: React.FC = () => {
   }, [filteredCourses, filters.page]);
 
   const paginationInfo = useMemo(() => {
-    const total = filteredCourses.length;
+    const total = coursesData?.pagination?.total || filteredCourses.length;
     return {
       page: filters.page || 1,
       pages: Math.ceil(total / ITEMS_PER_PAGE),
@@ -168,7 +168,7 @@ const Landing: React.FC = () => {
             Showing{' '}
             <span className="text-cyan-400 font-medium">{paginatedCourses.length}</span>
             {' '}of{' '}
-            <span className="text-cyan-400 font-medium">{filteredCourses.length}</span>
+            <span className="text-cyan-400 font-medium">{paginationInfo.total}</span>
             {' '}courses
             {filters.search && (
               <span className="text-zinc-500"> (filtered from {coursesData?.courses?.length || 0})</span>
