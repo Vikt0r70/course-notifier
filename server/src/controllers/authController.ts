@@ -178,6 +178,8 @@ export const login = async (req: Request, res: Response) => {
           notifyOnSimilarCourse: user.notifyOnSimilarCourse ?? true,
           notifyByEmail: user.notifyByEmail ?? true,
           notifyByWeb: user.notifyByWeb ?? true,
+          hasPassword: user.passwordHash !== '',
+          age: user.age || null,
         },
       },
     });
@@ -296,6 +298,8 @@ export const verifyOtp = async (req: Request, res: Response) => {
           notifyOnSimilarCourse: user.notifyOnSimilarCourse ?? true,
           notifyByEmail: user.notifyByEmail ?? true,
           notifyByWeb: user.notifyByWeb ?? true,
+          hasPassword: user.passwordHash !== '',
+          age: user.age || null,
         },
       },
     });
