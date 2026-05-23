@@ -7,16 +7,6 @@ import { authService } from '../services/authService';
 import { configService } from '../services/configService';
 import { Button } from '../components/ui';
 
-interface FacultyOption {
-  id: number;
-  name: string;
-}
-interface MajorOption {
-  id: number;
-  name: string;
-  faculty: string;
-}
-
 const STEPS = ['Age', 'Study Type', 'Faculty', 'Major', 'Time Shift'];
 
 const Onboarding: React.FC = () => {
@@ -31,24 +21,13 @@ const Onboarding: React.FC = () => {
   const [faculty, setFaculty] = useState('');
   const [major, setMajor] = useState('');
   const [timeShift, setTimeShift] = useState('الكل');
-  const [faculties, setFaculties] = useState<FacultyOption[]>([]);
-  const [majors, setMajors] = useState<MajorOption[]>([]);
-  const [facultiesLoaded, setFacultiesLoaded] = useState(false);
+  const [faculties, setFaculties] = useState<any>({});
+  const [majors, setMajors] = useState<any>({});
 
   useEffect(() => {
-    configService.getFaculties().then((data: FacultyOption[]) => {
-      setFaculties(data);
-      setFacultiesLoaded(true);
-    }).catch(() => setFacultiesLoaded(true));
+    configService.getFaculties().then(setFaculties);
+    configService.getMajors().then(setMajors);
   }, []);
-
-  useEffect(() => {
-    if (faculty && studyType === 'بكالوريوس') {
-      configService.getMajors().then((data: MajorOption[]) => {
-        setMajors(data.filter((m: MajorOption) => m.faculty === faculty));
-      }).catch(() => {});
-    }
-  }, [faculty, studyType]);
 
   const goNext = useCallback(async () => {
     if (step < STEPS.length - 1) {
@@ -69,8 +48,9 @@ const Onboarding: React.FC = () => {
       if (user) setUser({ ...user, onboardingCompleted: true });
       toast.success('Setup complete!');
       navigate('/dashboard');
-    } catch {
-      toast.error('Failed to save');
+    } catch (err) {
+      console.error('onboarding saveOnboarding error:', err);
+      toast.error('Failed to save settings. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -84,7 +64,9 @@ const Onboarding: React.FC = () => {
     setSaving(true);
     try {
       await authService.saveOnboarding({ [field]: value, step: 'incomplete' });
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('onboarding saveStep error:', field, err);
+    }
     setSaving(false);
   };
 
@@ -141,26 +123,26 @@ const Onboarding: React.FC = () => {
             <h2 className="text-xl font-semibold text-white">
               {studyType === 'بكالوريوس' ? 'Which faculty are you in?' : 'Which program are you enrolled in?'}
             </h2>
-            {!facultiesLoaded ? (
+            {Object.keys(faculties).length === 0 ? (
               <div className="flex justify-center py-8">
                 <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-2">
-                {(studyType === 'بكالوريوس' ? faculties : [
-                  { id: 0, name: 'ماجستير' },
-                  { id: 1, name: 'دبلوم عالي' },
-                ] as FacultyOption[]).map((opt) => (
+                {(studyType === 'بكالوريوس'
+                  ? (faculties.bachelor || [])
+                  : (faculties.graduate || [])
+                ).map((name: string) => (
                   <button
-                    key={opt.id}
-                    onClick={() => setFaculty(opt.name)}
+                    key={name}
+                    onClick={() => setFaculty(name)}
                     className={`w-full p-3 rounded-xl border text-left transition-all duration-200 ${
-                      faculty === opt.name
+                      faculty === name
                         ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
                         : 'border-zinc-700/50 bg-zinc-800/20 text-zinc-400 hover:border-zinc-600'
                     }`}
                   >
-                    {opt.name}
+                    {name}
                   </button>
                 ))}
               </div>
@@ -179,20 +161,20 @@ const Onboarding: React.FC = () => {
               <p className="text-zinc-400">Major is optional for postgraduate students.</p>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-2">
-                {majors.map((m) => (
+                {(majors[faculty] || []).map((name: string) => (
                   <button
-                    key={m.id}
-                    onClick={() => setMajor(m.name)}
+                    key={name}
+                    onClick={() => setMajor(name)}
                     className={`w-full p-3 rounded-xl border text-left transition-all duration-200 ${
-                      major === m.name
+                      major === name
                         ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
                         : 'border-zinc-700/50 bg-zinc-800/20 text-zinc-400 hover:border-zinc-600'
                     }`}
                   >
-                    {m.name}
+                    {name}
                   </button>
                 ))}
-                {majors.length === 0 && <p className="text-zinc-500 text-center py-4">Select a faculty first</p>}
+                {(!faculty || !majors[faculty]?.length) && <p className="text-zinc-500 text-center py-4">Select a faculty first</p>}
               </div>
             )}
             <Button fullWidth size="lg" onClick={goNext} icon={<ArrowRight className="w-5 h-5" />} disabled={studyType === 'بكالوريوس' && !major}>
