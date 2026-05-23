@@ -5,6 +5,16 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 import { PageSpinner } from './components/ui';
 
+// Read OAuth token from URL before React renders (avoids timing issue with PrivateRoute)
+(function initOAuthToken() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (token) {
+    localStorage.setItem('token', token);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+})();
+
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 
@@ -77,15 +87,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 function App() {
   const loadUser = useAuthStore((state) => state.loadUser);
 
-  // Pick up token from OAuth callback redirect URL
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    if (token) {
-      localStorage.setItem('token', token);
-      // Clean URL without reloading page
-      window.history.replaceState({}, '', window.location.pathname);
-    }
     loadUser();
   }, [loadUser]);
 
