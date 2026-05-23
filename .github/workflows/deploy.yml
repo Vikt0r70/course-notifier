@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Type-check ${{ matrix.workspace }}
         run: |
@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Install Playwright browsers
         run: cd client && npx playwright install --with-deps chromium
