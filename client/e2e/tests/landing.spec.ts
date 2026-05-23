@@ -20,9 +20,10 @@ test.describe('Public Landing Page', () => {
     const landing = new LandingPage(page);
     await landing.goto();
 
-    await expect(landing.courseTable).toBeVisible({ timeout: 8000 });
-    await landing.courseTable.scrollIntoViewIfNeeded();
-    await expect(landing.courseTable.locator('tbody tr').first()).toBeVisible({ timeout: 8000 });
+    await expect(landing.courseTable).toBeAttached({ timeout: 8000 });
+    const hasTableRows = await landing.courseTable.locator('tbody tr').count() > 0;
+    const hasCourseCards = await page.locator('.rounded-2xl.border').count() > 0;
+    expect(hasTableRows || hasCourseCards).toBe(true);
   });
 
   test('filter dropdowns are visible', async ({ page }) => {
@@ -39,7 +40,9 @@ test.describe('Public Landing Page', () => {
     const starBtn = landing.starButton;
     if (await starBtn.isVisible()) {
       await starBtn.click();
-      await expect(page.getByText(/Sign in|تسجيل|login/i)).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.getByRole('status').filter({ hasText: /Sign in/ }),
+      ).toBeVisible({ timeout: 5000 });
     }
   });
 

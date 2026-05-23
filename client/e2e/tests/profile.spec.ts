@@ -95,7 +95,7 @@ test.describe('Profile Settings Page', () => {
   test('displays user data in view mode (username, email, studyType, faculty, major)', async ({ page }) => {
     await setupProfilePage(page);
 
-    await expect(page.getByText('Test Student')).toBeVisible();
+    await expect(page.getByPlaceholder('johndoe')).toHaveValue('Test Student');
     await expect(page.getByPlaceholder('you@example.com')).toHaveValue('student@university.edu');
     await expect(page.getByText('الهندسة')).toBeVisible();
     await expect(page.getByText('علوم الحاسوب')).toBeVisible();
@@ -191,7 +191,7 @@ test.describe('Profile Edit Mode', () => {
 
     await expect(profilePage.saveButton).not.toBeVisible();
     await expect(profilePage.editButton).toBeVisible();
-    await expect(page.getByText('Test Student')).toBeVisible();
+    await expect(page.getByPlaceholder('johndoe')).toHaveValue('Test Student');
   });
 });
 

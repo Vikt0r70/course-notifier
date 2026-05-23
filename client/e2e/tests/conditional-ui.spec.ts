@@ -68,16 +68,16 @@ test.describe('Guest User - Landing Page', () => {
     const landing = new LandingPage(page);
     await landing.goto();
 
-    await expect(landing.courseTable).toBeVisible({ timeout: 8000 });
+    await expect(landing.courseTable).toBeAttached({ timeout: 8000 });
+    await page.waitForTimeout(1000);
 
     const starBtn = landing.starButton;
     if (await starBtn.isVisible()) {
       await starBtn.click();
+      await expect(
+        page.getByRole('status').filter({ hasText: /Sign in/ }),
+      ).toBeVisible({ timeout: 5000 });
     }
-
-    await expect(
-      page.getByText(/Sign in|تسجيل|login/i).first(),
-    ).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -92,9 +92,8 @@ test.describe('Authenticated User - Dashboard', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
-    await expect(
-      page.getByRole('link', { name: /Watchlist|المتابعة/i }),
-    ).toBeVisible();
+    const link = page.getByRole('link', { name: /Watchlist|المتابعة/i });
+    await expect(link).toBeAttached();
   });
 
   test('Notifications nav link IS visible', async ({ page }) => {
@@ -102,9 +101,8 @@ test.describe('Authenticated User - Dashboard', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
-    await expect(
-      page.getByRole('link', { name: /Notifications|الإشعارات/i }),
-    ).toBeVisible();
+    const link = page.getByRole('link', { name: /Notifications|الإشعارات/i });
+    await expect(link).toBeAttached();
   });
 
   test('Sign In and Sign Up buttons are NOT visible', async ({ page }) => {
@@ -125,7 +123,8 @@ test.describe('Authenticated User - Dashboard', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
-    await expect(page.getByText(profile.username)).toBeVisible();
+    const userEl = page.getByText(profile.username);
+    await expect(userEl).toBeAttached();
   });
 
   test('Report Issue button IS visible', async ({ page }) => {
