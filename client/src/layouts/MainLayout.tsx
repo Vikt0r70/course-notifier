@@ -52,8 +52,8 @@ const MainLayout: React.FC = () => {
 
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/watchlist', label: 'Watchlist', icon: Star },
-    { to: '/notifications', label: 'Notifications', icon: Bell },
+    { to: '/dashboard/watchlist', label: 'Watchlist', icon: Star },
+    { to: '/dashboard/notifications', label: 'Notifications', icon: Bell },
   ];
 
   const isActiveLink = (path: string) => location.pathname === path;
@@ -169,7 +169,7 @@ const MainLayout: React.FC = () => {
                       </div>
                       <div className="py-1">
                         <Link
-                          to="/profile"
+                          to="/dashboard/profile"
                           onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors"
                         >
