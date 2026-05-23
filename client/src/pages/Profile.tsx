@@ -148,9 +148,11 @@ const Profile: React.FC = () => {
     setPasswordLoading(true);
     try {
       if (user?.hasPassword) {
+        console.log('[Profile] changing password via changePassword endpoint');
         await authService.changePassword(data.currentPassword || '', data.newPassword);
         toast.success('Password changed successfully!');
       } else {
+        console.log('[Profile] setting initial password via setPassword endpoint');
         await authService.setPassword(data.newPassword);
         toast.success('Password set successfully! You can now login with your email and password.');
       }

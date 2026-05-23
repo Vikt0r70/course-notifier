@@ -685,11 +685,14 @@ export const setPassword = async (req: any, res: Response) => {
     }
 
     if (user.passwordHash !== '') {
+      console.log(`[setPassword] User ${user.email}: password already set, hash='${user.passwordHash.substring(0,10)}...'`);
       return res.status(400).json({ success: false, message: 'Password is already set. Use change password instead.' });
     }
 
+    console.log(`[setPassword] Setting password for ${user.email}, current hash empty`);
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     await user.save();
+    console.log(`[setPassword] Password set successfully for ${user.email}`);
 
     res.json({ success: true, message: 'Password set successfully. You can now login with your email and password.' });
   } catch (error: any) {
