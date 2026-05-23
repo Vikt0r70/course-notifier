@@ -11,7 +11,7 @@ const STEPS = ['Age', 'Study Type', 'Faculty', 'Major', 'Time Shift'];
 
 const Onboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useAuthStore();
+  const { user, loadUser } = useAuthStore();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -45,16 +45,18 @@ const Onboarding: React.FC = () => {
         timeShift,
         step: 'complete',
       });
-      if (user) setUser({ ...user, onboardingCompleted: true });
-      toast.success('Setup complete!');
-      navigate('/dashboard');
+      if (user) {
+        await loadUser();
+        toast.success('Setup complete!');
+        navigate('/dashboard');
+      }
     } catch (err) {
       console.error('onboarding saveOnboarding error:', err);
       toast.error('Failed to save settings. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [step, age, studyType, faculty, major, timeShift, navigate, user, setUser]);
+  }, [step, age, studyType, faculty, major, timeShift, navigate, user, loadUser]);
 
   const goBack = () => {
     if (step > 0) setStep(step - 1);
