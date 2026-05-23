@@ -98,7 +98,7 @@ export async function mockCourseEndpoints(page: Page) {
     });
   });
 
-  await page.route('**/api/courses/filter-options', (route) => {
+  await page.route(/\/api\/courses\/filter-options/, (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',

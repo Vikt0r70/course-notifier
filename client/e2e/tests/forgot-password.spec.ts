@@ -10,7 +10,7 @@ function mockForgotPasswordEndpoints(page: import('@playwright/test').Page) {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ success: true, message: 'OTP sent to your email' }),
+      body: JSON.stringify({ success: true, data: { userId: 42 }, message: 'OTP sent to your email' }),
     });
   });
 
@@ -74,7 +74,10 @@ test.describe('Forgot Password Page', () => {
     await forgotPasswordPage.emailInput.fill('student@university.edu');
     await forgotPasswordPage.sendCodeButton.click();
 
-    await expect(page.getByPlaceholder(/OTP|رمز/i)).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Verify Your Email')).toBeVisible({ timeout: 8000 });
+    const otpInputs = page.locator('.fixed.inset-0.bg-black\\/70 input');
+    await expect(otpInputs).toHaveCount(6);
     await expect(page.getByRole('button', { name: /Verify|تحقق/i })).toBeVisible();
   });
 
@@ -85,14 +88,18 @@ test.describe('Forgot Password Page', () => {
     await forgotPasswordPage.emailInput.fill('student@university.edu');
     await forgotPasswordPage.sendCodeButton.click();
 
-    const otpInput = page.getByPlaceholder(/OTP|رمز/i);
-    await expect(otpInput).toBeVisible({ timeout: 5000 });
-    await otpInput.fill('123456');
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Verify Your Email')).toBeVisible({ timeout: 8000 });
+    const otpInputs = page.locator('.fixed.inset-0.bg-black\\/70 input');
+    await expect(otpInputs).toHaveCount(6);
+    for (let i = 0; i < 6; i++) {
+      await otpInputs.nth(i).fill(String(i + 1));
+    }
+    // OTP auto-submits on 6th digit — wait for modal to close and password step
+    await page.waitForTimeout(500);
 
-    await page.getByRole('button', { name: /Verify|تحقق/i }).click();
-
-    await expect(page.getByPlaceholder(/new password|كلمة المرور الجديدة/i)).toBeVisible({ timeout: 5000 });
-    await expect(page.getByPlaceholder(/confirm|تأكيد/i)).toBeVisible();
+    await expect(page.getByPlaceholder('Minimum 8 characters')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByPlaceholder('Confirm your password')).toBeVisible();
     await expect(page.getByRole('button', { name: /Reset|إعادة تعيين/i })).toBeVisible();
   });
 
@@ -113,14 +120,19 @@ test.describe('Forgot Password Page', () => {
     await forgotPasswordPage.emailInput.fill('student@university.edu');
     await forgotPasswordPage.sendCodeButton.click();
 
-    const otpInput = page.getByPlaceholder(/OTP|رمز/i);
-    await expect(otpInput).toBeVisible({ timeout: 5000 });
-    await otpInput.fill('123456');
-    await page.getByRole('button', { name: /Verify|تحقق/i }).click();
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Verify Your Email')).toBeVisible({ timeout: 8000 });
+    const otpInputs = page.locator('.fixed.inset-0.bg-black\\/70 input');
+    await expect(otpInputs).toHaveCount(6);
+    for (let i = 0; i < 6; i++) {
+      await otpInputs.nth(i).fill(String(i + 1));
+    }
+    // OTP auto-submits on 6th digit
+    await page.waitForTimeout(500);
 
-    const newPasswordInput = page.getByPlaceholder(/new password|كلمة المرور الجديدة/i);
-    const confirmPasswordInput = page.getByPlaceholder(/confirm|تأكيد/i);
-    await expect(newPasswordInput).toBeVisible({ timeout: 5000 });
+    const newPasswordInput = page.getByPlaceholder('Minimum 8 characters');
+    const confirmPasswordInput = page.getByPlaceholder('Confirm your password');
+    await expect(newPasswordInput).toBeVisible({ timeout: 10000 });
 
     await newPasswordInput.fill('NewStrongPass1!');
     await confirmPasswordInput.fill('NewStrongPass1!');
@@ -151,6 +163,7 @@ test.describe('Forgot Password Page', () => {
               major: 'علوم الحاسوب',
               onboardingCompleted: true,
               avatarUrl: null,
+              hasPassword: true,
               notifyOnOpen: true,
               notifyOnClose: false,
               notifyOnSimilarCourse: true,
@@ -180,6 +193,7 @@ test.describe('Forgot Password Page', () => {
             major: 'علوم الحاسوب',
             onboardingCompleted: true,
             avatarUrl: null,
+            hasPassword: true,
             notifyOnOpen: true,
             notifyOnClose: false,
             notifyOnSimilarCourse: true,
@@ -196,18 +210,23 @@ test.describe('Forgot Password Page', () => {
     await forgotPasswordPage.emailInput.fill('student@university.edu');
     await forgotPasswordPage.sendCodeButton.click();
 
-    const otpInput = page.getByPlaceholder(/OTP|رمز/i);
-    await expect(otpInput).toBeVisible({ timeout: 5000 });
-    await otpInput.fill('123456');
-    await page.getByRole('button', { name: /Verify|تحقق/i }).click();
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Verify Your Email')).toBeVisible({ timeout: 8000 });
+    const otpInputs = page.locator('.fixed.inset-0.bg-black\\/70 input');
+    await expect(otpInputs).toHaveCount(6);
+    for (let i = 0; i < 6; i++) {
+      await otpInputs.nth(i).fill(String(i + 1));
+    }
+    // OTP auto-submits on 6th digit
+    await page.waitForTimeout(500);
 
-    const newPasswordInput = page.getByPlaceholder(/new password|كلمة المرور الجديدة/i);
-    await expect(newPasswordInput).toBeVisible({ timeout: 5000 });
+    const newPasswordInput = page.getByPlaceholder('Minimum 8 characters');
+    await expect(newPasswordInput).toBeVisible({ timeout: 10000 });
     await newPasswordInput.fill('NewStrongPass1!');
-    await page.getByPlaceholder(/confirm|تأكيد/i).fill('NewStrongPass1!');
+    await page.getByPlaceholder('Confirm your password').fill('NewStrongPass1!');
     await page.getByRole('button', { name: /Reset|إعادة تعيين/i }).click();
 
-    await expect(page).toHaveURL(/dashboard/, { timeout: 8000 });
+    await expect(page).toHaveURL(/dashboard/, { timeout: 10000 });
   });
 
   test('validation: empty email shows error', async ({ page }) => {

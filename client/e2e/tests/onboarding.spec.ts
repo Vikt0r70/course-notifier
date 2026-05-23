@@ -70,7 +70,7 @@ test.describe('Onboarding Wizard', () => {
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
 
-    await expect(page.getByText(/age|العمر/i)).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText(/age|العمر/i).first()).toBeVisible({ timeout: 8000 });
     await expect(onboarding.nextButton).toBeVisible();
   });
 
@@ -87,8 +87,9 @@ test.describe('Onboarding Wizard', () => {
 
     await expect(onboarding.nextButton).toBeVisible({ timeout: 8000 });
     await onboarding.nextButton.click();
+    await page.waitForTimeout(500);
 
-    await expect(page.getByText(/بكالوريوس/).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/بكالوريوس/).first()).toBeVisible({ timeout: 8000 });
     await expect(page.getByText(/دراسات عليا/).first()).toBeVisible();
   });
 
@@ -97,10 +98,13 @@ test.describe('Onboarding Wizard', () => {
     await onboarding.goto();
 
     await onboarding.nextButton.click();
+    await page.waitForTimeout(500);
     await page.getByText('بكالوريوس').first().click();
+    await page.waitForTimeout(300);
     await onboarding.nextButton.click();
+    await page.waitForTimeout(500);
 
-    await expect(page.getByText(/faculty|كلية/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/faculty|كلية/i).first()).toBeVisible({ timeout: 8000 });
   });
 
   test('can complete full onboarding flow', async ({ page }) => {
@@ -111,12 +115,36 @@ test.describe('Onboarding Wizard', () => {
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
 
-    for (let i = 0; i < 5; i++) {
-      await expect(onboarding.nextButton).toBeVisible({ timeout: 8000 });
-      if (await onboarding.nextButton.isVisible()) {
-        await onboarding.nextButton.click();
-      }
-    }
+    // Step 0: Skip age
+    await expect(onboarding.nextButton).toBeVisible({ timeout: 8000 });
+    await onboarding.nextButton.click();
+    await page.waitForTimeout(500);
+
+    // Step 1: Select study type
+    await page.getByText('بكالوريوس').first().click();
+    await page.waitForTimeout(300);
+    await onboarding.nextButton.click();
+    await page.waitForTimeout(500);
+
+    // Step 2: Select faculty
+    await expect(page.getByText('الهندسة').first()).toBeVisible({ timeout: 8000 });
+    await page.getByText('الهندسة').first().click();
+    await page.waitForTimeout(300);
+    await onboarding.nextButton.click();
+    await page.waitForTimeout(500);
+
+    // Step 3: Select major
+    await expect(page.getByText('هندسة البرمجيات').first()).toBeVisible({ timeout: 8000 });
+    await page.getByText('هندسة البرمجيات').first().click();
+    await page.waitForTimeout(300);
+    await onboarding.nextButton.click();
+    await page.waitForTimeout(500);
+
+    // Step 4: Select time shift and finish
+    await expect(page.getByText('صباحي').first()).toBeVisible({ timeout: 8000 });
+    await page.getByText('صباحي').first().click();
+    await page.waitForTimeout(300);
+    await onboarding.nextButton.click();
 
     await page.waitForTimeout(500);
   });

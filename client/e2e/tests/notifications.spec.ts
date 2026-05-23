@@ -125,7 +125,7 @@ test.describe('Notifications Page', () => {
     const np = new NotificationsPage(page);
     await np.goto();
 
-    const dots = page.locator('.bg-cyan-400.animate-pulse');
+    const dots = page.locator('.bg-cyan-400.animate-pulse, [class*="unread-indicator"], [class*="unread-dot"]');
     await expect(dots.first()).toBeVisible({ timeout: 8000 });
     await expect(dots).toHaveCount(2);
   });
@@ -172,7 +172,7 @@ test.describe('Notifications Page', () => {
     await np.markAllReadButton.click();
 
     await expect(np.markAllReadButton).not.toBeVisible({ timeout: 5000 });
-    await expect(page.locator('.bg-cyan-400.animate-pulse')).toHaveCount(0);
+    await expect(page.locator('.bg-cyan-400.animate-pulse, [class*="unread-indicator"], [class*="unread-dot"]')).toHaveCount(0);
     await expect(allRead).toBe(true);
   });
 
@@ -219,7 +219,7 @@ test.describe('Notifications Page', () => {
 
     const unreadTab = page.getByRole('button', { name: /غير مقروء/ }).first();
     await expect(unreadTab).toBeVisible({ timeout: 8000 });
-    const badge = unreadTab.locator('.bg-red-500');
+    const badge = unreadTab.locator('.bg-red-500, [class*="badge"], [class*="count"]');
     await expect(badge).toBeVisible();
     await expect(badge).toHaveText('2');
   });

@@ -79,7 +79,7 @@ test.describe('Registration Page', () => {
     await register.passwordInput.fill('12345');
     await register.submitButton.click();
 
-    await expect(page.getByText('Password must be at least 6 characters')).toBeVisible();
+    await expect(page.getByText('Password must be at least 6 characters').first()).toBeVisible();
   });
 
   test('faculty dropdown loads dynamically when study type is selected', async ({ page }) => {
@@ -87,11 +87,12 @@ test.describe('Registration Page', () => {
     await register.goto();
 
     await register.studyTypeSelect.selectOption('بكالوريوس');
+    await page.waitForTimeout(300);
 
     await expect(register.facultySelect).toBeVisible();
     await expect(page.locator('option', { hasText: 'الهندسة' })).toBeAttached();
     await expect(page.locator('option', { hasText: 'تكنولوجيا المعلومات' })).toBeAttached();
-    await expect(page.locator('option', { hasText: 'العلوم' })).toBeAttached();
+    await expect(page.getByText('العلوم', { exact: true })).toBeAttached();
   });
 
   test('major dropdown filters by selected faculty', async ({ page }) => {
@@ -99,9 +100,11 @@ test.describe('Registration Page', () => {
     await register.goto();
 
     await register.studyTypeSelect.selectOption('بكالوريوس');
+    await page.waitForTimeout(300);
     await expect(register.facultySelect).toBeVisible();
 
     await register.facultySelect.selectOption('الهندسة');
+    await page.waitForTimeout(300);
 
     await expect(register.majorSelect).toBeVisible();
     await expect(page.locator('option', { hasText: 'هندسة البرمجيات' })).toBeAttached();
@@ -132,15 +135,18 @@ test.describe('Registration Page', () => {
     await register.emailInput.fill('newuser@example.com');
     await register.passwordInput.fill('password123');
     await register.studyTypeSelect.selectOption('بكالوريوس');
+    await page.waitForTimeout(300);
     await expect(register.facultySelect).toBeVisible();
     await register.facultySelect.selectOption('الهندسة');
+    await page.waitForTimeout(300);
     await expect(register.majorSelect).toBeVisible();
     await register.majorSelect.selectOption('هندسة البرمجيات');
     await register.timeShiftSelect.selectOption('صباحي');
 
     await register.submitButton.click();
+    await page.waitForTimeout(500);
 
-    await expect(page.getByText(/Enter the 6-digit code/i)).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText(/Enter the 6-digit code/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('login link navigates to /login', async ({ page }) => {

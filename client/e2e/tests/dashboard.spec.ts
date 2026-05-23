@@ -7,6 +7,7 @@ test.describe('Dashboard', () => {
     await setupAuthToken(page);
     await mockAllEndpoints(page);
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
   });
 
   test('dashboard page loads successfully', async ({ page }) => {

@@ -88,6 +88,7 @@ AGENTS.md
 .serena/
 serena/
 .opencode/
+opencode.json
 
 # BMAD folders
 _bmad/

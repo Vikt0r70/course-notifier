@@ -11,8 +11,8 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.emailInput = page.getByRole('textbox', { name: /Email|البريد/i });
-    this.passwordInput = page.getByPlaceholder(/Enter your password|كلمة المرور/i );
+    this.emailInput = page.getByPlaceholder('you@example.com');
+    this.passwordInput = page.getByPlaceholder('Enter your password');
     this.signInButton = page.getByRole('button', { name: /Sign In|تسجيل الدخول/i });
     this.googleButton = page.locator('a[href*="google"]');
     this.createAccountLink = page.getByRole('link', { name: /Create an Account|إنشاء حساب/i });
@@ -22,7 +22,7 @@ export class LoginPage {
   async goto() {
     await this.page.goto('/login');
     await this.page.waitForLoadState('domcontentloaded');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForTimeout(1000);
   }
 
   async login(email: string, password: string) {
@@ -74,8 +74,8 @@ export class OnboardingPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.progressBar = page.locator('.flex.h-1').first();
-    this.nextButton = page.getByRole('button', { name: /Next|Skip|التالي|تخطي/i });
+    this.progressBar = page.locator('[class*="progress"], .flex.h-1').first();
+    this.nextButton = page.getByRole('button', { name: /Next|Skip|Finish Setup|Select a major|التالي|تخطي|إنهاء/i });
     this.backButton = page.getByRole('button').filter({ has: page.locator('svg.lucide-arrow-left') });
     this.ageInput = page.getByRole('spinbutton').first();
     this.finishButton = page.getByRole('button', { name: /Finish|إنهاء/i });
@@ -83,7 +83,8 @@ export class OnboardingPage {
 
   async goto() {
     await this.page.goto('/dashboard/onboarding');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 }
 
@@ -102,21 +103,22 @@ export class RegisterPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.usernameInput = page.getByPlaceholder(/Username|اسم المستخدم/i);
-    this.emailInput = page.getByPlaceholder(/Email|البريد/i);
-    this.passwordInput = page.getByPlaceholder(/Password|كلمة المرور/i);
+    this.usernameInput = page.getByPlaceholder('johndoe');
+    this.emailInput = page.getByPlaceholder('you@example.com');
+    this.passwordInput = page.getByPlaceholder('Minimum 6 characters');
     this.submitButton = page.getByRole('button', { name: /Create Account|إنشاء حساب/i });
     this.loginLink = page.getByRole('link', { name: /Sign In|تسجيل الدخول/i });
     this.studyTypeSelect = page.locator('select').first();
     this.facultySelect = page.locator('select').nth(1);
     this.majorSelect = page.locator('select').nth(2);
     this.timeShiftSelect = page.locator('select').nth(3);
-    this.ageInput = page.getByPlaceholder(/Age|العمر/i);
+    this.ageInput = page.getByPlaceholder(/18|العمر/);
   }
 
   async goto() {
     await this.page.goto('/register');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 
   async fillForm(data: { username: string; email: string; password: string }) {
@@ -134,14 +136,15 @@ export class ForgotPasswordPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.emailInput = page.getByPlaceholder(/Email|البريد/i);
+    this.emailInput = page.getByPlaceholder('you@example.com');
     this.sendCodeButton = page.getByRole('button', { name: /Send|إرسال/i });
     this.backToLoginLink = page.getByRole('link', { name: /Back|العودة/i });
   }
 
   async goto() {
     await this.page.goto('/forgot-password');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 }
 
@@ -168,13 +171,14 @@ export class DashboardPage {
     this.courseTable = page.locator('table').first();
     this.courseRows = page.locator('table tbody tr');
     this.pagination = page.locator('button').filter({ hasText: /Next|Previous/ });
-    this.starButtons = page.locator('button[title*="watchlist"]');
-    this.resultCount = page.locator('.text-cyan-400.font-medium').first();
+    this.starButtons = page.locator('button[title="Add to watchlist"], button[title="Remove from watchlist"]');
+    this.resultCount = page.locator('[class*="result-count"], .text-cyan-400.font-medium').first();
   }
 
   async goto() {
     await this.page.goto('/dashboard');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 }
 
@@ -198,7 +202,7 @@ export class ProfilePage {
     this.editButton = page.getByRole('button', { name: /Edit|تعديل/i });
     this.saveButton = page.getByRole('button', { name: /Save|حفظ/i });
     this.cancelButton = page.getByRole('button', { name: /Cancel|إلغاء/i });
-    this.usernameInput = page.getByPlaceholder(/Username|اسم المستخدم/i);
+    this.usernameInput = page.getByPlaceholder('johndoe');
     this.facultyDisplay = page.getByText(/Not set|غير محدد/i);
     this.majorDisplay = page.getByText(/Not set|غير محدد/i);
     this.passwordToggle = page.getByRole('button', { name: /Set a Password|Change Password|تعيين كلمة مرور|تغيير كلمة المرور/i }).first();
@@ -211,7 +215,8 @@ export class ProfilePage {
 
   async goto() {
     await this.page.goto('/dashboard/profile');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 }
 
@@ -225,16 +230,17 @@ export class WatchlistPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.watchlistItems = page.locator('[class*="WatchlistItem"], .rounded-xl.border-zinc-800');
+    this.watchlistItems = page.locator('h3').filter({ hasText: /شعبة/ });
     this.emptyState = page.getByText(/empty|فارغ/i);
     this.removeButton = page.getByRole('button', { name: /Remove|إزالة/i });
     this.filtersButton = page.getByRole('button', { name: /Filters|مرشحات/i });
-    this.notificationToggles = page.locator('button[role="switch"]');
+    this.notificationToggles = page.locator('label').filter({ hasText: /When course opens|When course closes|Similar sections open|Email|Web notification/i });
   }
 
   async goto() {
     await this.page.goto('/dashboard/watchlist');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 }
 
@@ -248,14 +254,15 @@ export class NotificationsPage {
   constructor(page: Page) {
     this.page = page;
     this.filterTabs = page.getByRole('button').filter({ hasText: /All|Unread|Opened|Closed|الكل|غير مقروء|مفتوحة|مغلقة/i });
-    this.notificationCards = page.locator('[class*="Notification"], .rounded-xl.border-zinc-800');
+    this.notificationCards = page.locator('[class*="Notification"], [class*="notification-card"], .rounded-xl');
     this.markAllReadButton = page.getByRole('button', { name: /mark all|تحديد الكل/i });
     this.emptyState = page.getByText(/no notifications|لا توجد إشعارات/i);
   }
 
   async goto() {
     await this.page.goto('/dashboard/notifications');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 }
 
@@ -278,6 +285,7 @@ export class AdminPage {
 
   async goto() {
     await this.page.goto('/admin');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 }

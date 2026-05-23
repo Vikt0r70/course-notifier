@@ -49,7 +49,7 @@ test.describe('Guest User - Landing Page', () => {
     await landing.goto();
 
     await expect(
-      page.locator('button').filter({ has: page.locator('[class*="Avatar"]') }),
+      page.locator('button').filter({ has: page.locator('[class*="Avatar"], [class*="avatar"]') }),
     ).not.toBeVisible();
 
     await expect(page.getByText(/Profile Settings|Sign Out/i)).not.toBeVisible();
