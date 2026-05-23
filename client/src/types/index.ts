@@ -11,6 +11,7 @@ export interface User {
   age?: number;
   onboardingCompleted?: boolean;
   avatarUrl?: string | null;
+  hasPassword?: boolean;
   // Global notification settings
   notifyOnOpen?: boolean;
   notifyOnClose?: boolean;

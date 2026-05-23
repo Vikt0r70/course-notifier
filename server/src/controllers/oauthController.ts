@@ -111,7 +111,7 @@ export const googleCallback = async (req: Request, res: Response) => {
 
       const redirectUrl = user.onboardingCompleted
         ? `${config.client.url}/dashboard?token=${token}`
-        : `${config.client.url}/onboarding?token=${token}`;
+        : `${config.client.url}/dashboard/onboarding?token=${token}`;
       return res.redirect(redirectUrl);
     }
 
@@ -131,7 +131,7 @@ export const googleCallback = async (req: Request, res: Response) => {
     const token = signToken(user);
     setAuthCookie(res, token);
 
-    res.redirect(`${config.client.url}/onboarding?token=${token}`);
+    res.redirect(`${config.client.url}/dashboard/onboarding?token=${token}`);
   } catch (error: any) {
     console.error('Google OAuth callback error:', error);
     res.redirect(`${config.client.url}/login?error=google_auth_failed`);

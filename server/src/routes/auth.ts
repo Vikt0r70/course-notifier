@@ -24,6 +24,7 @@ router.post('/logout', authController.logout);
 router.get('/profile', authenticate, authController.getProfile);
 router.put('/profile', authenticate, authController.updateProfile);
 router.post('/change-password', authenticate, authController.changePassword);
+router.post('/set-password', authenticate, authController.setPassword);
 router.post('/resend-verification', authenticate, authController.resendVerification);
 
 // Global notification settings endpoints

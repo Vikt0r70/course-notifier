@@ -508,7 +508,7 @@ export const logout = async (req: Request, res: Response) => {
 export const getProfile = async (req: any, res: Response) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['passwordHash', 'emailVerificationToken', 'passwordResetToken', 'emailOtpCode'] },
+      attributes: { exclude: ['emailVerificationToken', 'passwordResetToken', 'emailOtpCode'] },
     });
 
     if (!user) {
@@ -525,8 +525,12 @@ export const getProfile = async (req: any, res: Response) => {
         major: user.major || '',
         studyType: user.studyType || 'بكالوريوس',
         timeShift: user.timeShift || 'الكل',
+        age: user.age || null,
         isEmailVerified: user.isEmailVerified,
         isAdmin: user.isAdmin,
+        hasPassword: user.passwordHash !== '',
+        onboardingCompleted: user.onboardingCompleted,
+        avatarUrl: user.avatarUrl || null,
         // Global notification settings
         notifyOnOpen: user.notifyOnOpen ?? true,
         notifyOnClose: user.notifyOnClose ?? false,
@@ -659,6 +663,37 @@ export const changePassword = async (req: any, res: Response) => {
     res.json({ success: true, message: 'Password changed successfully' });
   } catch (error: any) {
     console.error('Change password error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const setPassword = async (req: any, res: Response) => {
+  try {
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({ success: false, message: 'New password is required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.passwordHash !== '') {
+      return res.status(400).json({ success: false, message: 'Password is already set. Use change password instead.' });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ success: true, message: 'Password set successfully. You can now login with your email and password.' });
+  } catch (error: any) {
+    console.error('Set password error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

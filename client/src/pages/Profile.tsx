@@ -33,7 +33,7 @@ interface ProfileForm {
 }
 
 interface PasswordForm {
-  currentPassword: string;
+  currentPassword?: string;
   newPassword: string;
   confirmPassword: string;
 }
@@ -147,14 +147,19 @@ const Profile: React.FC = () => {
   const onPasswordSubmit = async (data: PasswordForm) => {
     setPasswordLoading(true);
     try {
-      await authService.changePassword(data.currentPassword, data.newPassword);
-      toast.success('Password changed successfully!');
+      if (user?.hasPassword) {
+        await authService.changePassword(data.currentPassword || '', data.newPassword);
+        toast.success('Password changed successfully!');
+      } else {
+        await authService.setPassword(data.newPassword);
+        toast.success('Password set successfully! You can now login with your email and password.');
+      }
       resetPassword();
       setShowPasswordChange(false);
       // Reload user data to ensure fresh state
       await loadUser();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to change password');
+      toast.error(error.response?.data?.message || 'Failed to update password');
     } finally {
       setPasswordLoading(false);
     }
@@ -345,8 +350,9 @@ const Profile: React.FC = () => {
               </div>
               <input 
                 type="password" 
-                value="••••••••••••" 
+                value={user?.hasPassword ? "••••••••••••" : ""} 
                 readOnly 
+                placeholder={user?.hasPassword ? undefined : "No password set"}
                 className="w-full pl-11 pr-4 py-3 bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 rounded-xl text-zinc-400 cursor-not-allowed"
               />
             </div>
@@ -358,12 +364,12 @@ const Profile: React.FC = () => {
               {showPasswordChange ? (
                 <>
                   <ChevronUp className="w-4 h-4" />
-                  Cancel Password Change
+                  Cancel
                 </>
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  Change Password
+                  {user?.hasPassword ? 'Change Password' : 'Set a Password'}
                 </>
               )}
             </button>
@@ -374,9 +380,10 @@ const Profile: React.FC = () => {
             <div className="mt-4 p-6 bg-zinc-800/30 border border-zinc-700/50 rounded-xl space-y-4 animate-fade-in">
               <div className="flex items-center gap-2 mb-4">
                 <Lock className="w-5 h-5 text-cyan-400" />
-                <h3 className="text-lg font-medium text-zinc-200">Change Password</h3>
+                <h3 className="text-lg font-medium text-zinc-200">{user?.hasPassword ? 'Change Password' : 'Set a Password'}</h3>
               </div>
               
+              {user?.hasPassword && (
               <div className="relative">
                 <Input
                   label="Current Password"
@@ -396,6 +403,7 @@ const Profile: React.FC = () => {
                   {...registerPassword('currentPassword', { required: 'Current password is required' })}
                 />
               </div>
+              )}
 
               <div className="relative">
                 <Input

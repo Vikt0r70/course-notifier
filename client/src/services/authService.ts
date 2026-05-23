@@ -36,6 +36,11 @@ export const authService = {
     return response.data;
   },
 
+  async setPassword(newPassword: string) {
+    const response = await api.post('/auth/set-password', { newPassword });
+    return response.data;
+  },
+
   async resendVerification() {
     const response = await api.post('/auth/resend-verification');
     return response.data;
