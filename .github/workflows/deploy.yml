@@ -33,7 +33,7 @@ jobs:
   e2e-test:
     needs: typecheck
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
           PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Install Playwright browsers
-        run: cd client && npx playwright install --with-deps chromium
+        run: cd client && npx playwright install --with-deps chromium webkit
 
       - name: Run E2E tests
         run: cd client && npx playwright test --reporter=html,list
