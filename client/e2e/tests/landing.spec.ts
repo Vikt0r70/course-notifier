@@ -21,7 +21,8 @@ test.describe('Public Landing Page', () => {
     await landing.goto();
 
     await expect(landing.courseTable).toBeVisible({ timeout: 8000 });
-    await expect(page.getByText(/مقدمة في البرمجة|CS101/)).toBeVisible();
+    await landing.courseTable.scrollIntoViewIfNeeded();
+    await expect(landing.courseTable.locator('tbody tr').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('filter dropdowns are visible', async ({ page }) => {

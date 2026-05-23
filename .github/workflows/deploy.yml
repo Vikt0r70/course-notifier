@@ -5,7 +5,7 @@ on:
     branches: [master]
 
 jobs:
-  test:
+  typecheck:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -30,8 +30,42 @@ jobs:
           cd ${{ matrix.workspace }}
           npx tsc --noEmit
 
+  e2e-test:
+    needs: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+
+      - name: Install Playwright browsers
+        run: cd client && npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: cd client && npx playwright test --reporter=html,list
+        env:
+          CI: 'true'
+
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: client/playwright-report/
+
   deploy:
-    needs: test
+    needs: [typecheck, e2e-test]
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH

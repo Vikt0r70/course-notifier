@@ -6,7 +6,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "playwright test",
+    "test:ci": "playwright test --reporter=html,list",
+    "test:headed": "playwright test --headed"
   },
   "dependencies": {
     "@sentry/react": "^10.32.1",

@@ -40,15 +40,8 @@ const testCourses = Array.from({ length: 5 }, (_, i) => ({
 }));
 
 const filterOptions = {
-  faculties: [
-    { id: 1, name: 'الهندسة' },
-    { id: 2, name: 'تقنية المعلومات' },
-    { id: 3, name: 'العلوم' },
-  ],
-  programs: [
-    { id: 1, name: 'ماجستير' },
-    { id: 2, name: 'دبلوم عالي' },
-  ],
+  faculties: ['الهندسة', 'تكنولوجيا المعلومات', 'العلوم', 'الآداب', 'الاقتصاد والعلوم الإدارية'],
+  programs: ['ماجستير', 'دبلوم عالي'],
   timeShifts: ['صباحي', 'مسائي'],
 };
 
@@ -83,7 +76,18 @@ export async function mockCourseEndpoints(page: Page) {
   await page.route('**/api/courses?**', (route) => {
     const url = route.request().url();
     if (url.includes('filter-options')) {
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: filterOptions }) });
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            faculties: filterOptions.faculties,
+            programs: filterOptions.programs,
+            timeShifts: filterOptions.timeShifts,
+          },
+        }),
+      });
     } else {
       route.fulfill({
         status: 200,
@@ -105,7 +109,17 @@ export async function mockAllEndpoints(page: Page) {
   await mockAuthEndpoints(page);
   await mockCourseEndpoints(page);
   await page.route('**/api/config/faculties', (route) => {
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: filterOptions.faculties }) });
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          bachelor: filterOptions.faculties,
+          graduate: filterOptions.programs,
+        },
+      }),
+    });
   });
   await page.route('**/api/config/majors', (route) => {
     route.fulfill({
@@ -113,11 +127,11 @@ export async function mockAllEndpoints(page: Page) {
       contentType: 'application/json',
       body: JSON.stringify({
         success: true,
-        data: [
-          { id: 1, name: 'علوم الحاسوب', faculty: 'الهندسة' },
-          { id: 2, name: 'الهندسة المدنية', faculty: 'الهندسة' },
-          { id: 3, name: 'تقنية المعلومات', faculty: 'تقنية المعلومات' },
-        ],
+        data: {
+          'الهندسة': ['هندسة البرمجيات', 'الهندسة المدنية'],
+          'تكنولوجيا المعلومات': ['علم الحاسوب', 'الأمن السيبراني'],
+          'العلوم': ['الرياضيات', 'الفيزياء'],
+        },
       }),
     });
   });
