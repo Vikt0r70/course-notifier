@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { RegisterPage } from '../pages';
-import { mockAuthEndpoints } from '../fixtures/mocks';
 
 test.describe('Registration Page', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthEndpoints(page);
+    await page.route('**/api/auth/profile', (route) => {
+      route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ success: false, message: 'Unauthorized' }) });
+    });
 
     await page.route('**/api/config/faculties', (route) => {
       route.fulfill({

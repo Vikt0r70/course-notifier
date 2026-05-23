@@ -1,10 +1,39 @@
 import { test, expect } from '@playwright/test';
 import { OnboardingPage } from '../pages';
-import { mockAllEndpoints } from '../fixtures/mocks';
+import { mockAllEndpoints, setupAuthToken } from '../fixtures/mocks';
 
 test.describe('Onboarding Wizard', () => {
   test.beforeEach(async ({ page }) => {
+    await setupAuthToken(page);
     await mockAllEndpoints(page);
+    await page.route('**/api/auth/profile', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: 1,
+            email: 'new@student.edu',
+            username: 'New Student',
+            isAdmin: false,
+            isEmailVerified: true,
+            faculty: '',
+            studyType: 'بكالوريوس',
+            timeShift: 'الكل',
+            major: '',
+            onboardingCompleted: false,
+            avatarUrl: null,
+            notifyOnOpen: true,
+            notifyOnClose: false,
+            notifyOnSimilarCourse: true,
+            notifyByEmail: true,
+            notifyByWeb: true,
+            hasPassword: true,
+          },
+        }),
+      });
+    });
     await page.route('**/api/auth/login', (route) => {
       route.fulfill({
         status: 200,
@@ -38,7 +67,6 @@ test.describe('Onboarding Wizard', () => {
   });
 
   test('renders age step with input and skip button', async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('token', 'test-jwt'));
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
 
@@ -47,7 +75,6 @@ test.describe('Onboarding Wizard', () => {
   });
 
   test('progress bar shows correct steps', async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('token', 'test-jwt'));
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
 
@@ -55,19 +82,17 @@ test.describe('Onboarding Wizard', () => {
   });
 
   test('can navigate to study type step', async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('token', 'test-jwt'));
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
 
     await expect(onboarding.nextButton).toBeVisible({ timeout: 8000 });
     await onboarding.nextButton.click();
 
-    await expect(page.getByText(/بكالوريوس/)).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText(/دراسات عليا/)).toBeVisible();
+    await expect(page.getByText(/بكالوريوس/).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/دراسات عليا/).first()).toBeVisible();
   });
 
   test('can select study type and advance', async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('token', 'test-jwt'));
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
 
@@ -79,8 +104,6 @@ test.describe('Onboarding Wizard', () => {
   });
 
   test('can complete full onboarding flow', async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('token', 'test-jwt'));
-
     await page.route('**/api/auth/onboarding', (route) => {
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Saved' }) });
     });

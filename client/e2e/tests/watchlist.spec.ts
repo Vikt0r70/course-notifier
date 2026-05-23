@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { WatchlistPage } from '../pages';
-import { mockAuthEndpoints } from '../fixtures/mocks';
+import { mockAuthEndpoints, setupAuthToken } from '../fixtures/mocks';
 
 const watchlistItems = [
   {
@@ -129,6 +129,7 @@ function mockEmptyWatchlist(page: import('@playwright/test').Page) {
 
 test.describe('Watchlist Page', () => {
   test.beforeEach(async ({ page }) => {
+    await setupAuthToken(page);
     await mockAuthEndpoints(page);
     await mockWatchlistEndpoints(page);
   });

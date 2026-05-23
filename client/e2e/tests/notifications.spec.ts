@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { NotificationsPage } from '../pages';
+import { setupAuthToken } from '../fixtures/mocks';
 
 const USER = {
   id: 1,
@@ -92,7 +93,7 @@ function mockNotifications(page: any, data: any[]) {
 
 test.describe('Notifications Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('token', 'test-jwt'));
+    await setupAuthToken(page);
     await mockAuth(page);
   });
 
@@ -101,9 +102,9 @@ test.describe('Notifications Page', () => {
     const np = new NotificationsPage(page);
     await np.goto();
 
-    await expect(page.getByText('CS101')).toBeVisible({ timeout: 8000 });
-    await expect(page.getByText('CS205')).toBeVisible();
-    await expect(page.getByText('MATH101')).toBeVisible();
+    await expect(page.getByText('CS101').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('CS205').first()).toBeVisible();
+    await expect(page.getByText('MATH101').first()).toBeVisible();
   });
 
   test('each card shows course code, section, message, timestamp', async ({ page }) => {
@@ -111,12 +112,12 @@ test.describe('Notifications Page', () => {
     const np = new NotificationsPage(page);
     await np.goto();
 
-    await expect(page.getByText('CS101')).toBeVisible({ timeout: 8000 });
-    await expect(page.getByText(/شعبة 1/)).toBeVisible();
-    await expect(page.getByText(/شعبة 2/)).toBeVisible();
-    await expect(page.getByText(/مراقبة مباشرة/)).toBeVisible();
-    await expect(page.getByText(/شعبة بديلة/)).toBeVisible();
-    await expect(page.getByText(/منذ/)).toBeVisible();
+    await expect(page.getByText('CS101').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText(/شعبة 1/).first()).toBeVisible();
+    await expect(page.getByText(/شعبة 2/).first()).toBeVisible();
+    await expect(page.getByText(/مراقبة مباشرة/).first()).toBeVisible();
+    await expect(page.getByText(/شعبة بديلة/).first()).toBeVisible();
+    await expect(page.getByText(/منذ/).first()).toBeVisible();
   });
 
   test('shows unread indicator (blue dot) for unread items', async ({ page }) => {
@@ -140,20 +141,18 @@ test.describe('Notifications Page', () => {
   test('clicking mark all as read sends PUT and clears unread indicators', async ({ page }) => {
     let allRead = false;
 
-    await page.route('**/api/notifications/read-all', (route) => {
-      allRead = true;
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true }),
-      });
-    });
-
     await page.route('**/api/notifications**', (route) => {
       const method = route.request().method();
       const url = route.request().url();
 
-      if (method === 'PUT' && /\/\d+\/read$/.test(url)) {
+      if (method === 'PUT' && url.includes('/read-all')) {
+        allRead = true;
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        });
+      } else if (method === 'PUT' && /\/\d+\/read$/.test(url)) {
         route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
       } else if (method === 'GET') {
         route.fulfill({
@@ -182,10 +181,10 @@ test.describe('Notifications Page', () => {
     const np = new NotificationsPage(page);
     await np.goto();
 
-    await expect(page.getByRole('button', { name: 'الكل' })).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: /غير مقروء/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'فتحت' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'أغلقت' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'الكل' }).first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('button', { name: /غير مقروء/ }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'فتحت' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'أغلقت' }).first()).toBeVisible();
   });
 
   test('clicking filter tab changes displayed items', async ({ page }) => {
@@ -193,14 +192,14 @@ test.describe('Notifications Page', () => {
     const np = new NotificationsPage(page);
     await np.goto();
 
-    await expect(page.getByText('CS101')).toBeVisible({ timeout: 8000 });
-    await expect(page.getByText('MATH101')).toBeVisible();
+    await expect(page.getByText('CS101').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('MATH101').first()).toBeVisible();
 
-    await page.getByRole('button', { name: /غير مقروء/ }).click();
+    await page.getByRole('button', { name: /غير مقروء/ }).first().click();
     await page.waitForTimeout(300);
 
-    await expect(page.getByText('CS101')).toBeVisible();
-    await expect(page.getByText('CS205')).toBeVisible();
+    await expect(page.getByText('CS101').first()).toBeVisible();
+    await expect(page.getByText('CS205').first()).toBeVisible();
     await expect(page.getByText('MATH101')).not.toBeVisible();
   });
 
@@ -218,7 +217,7 @@ test.describe('Notifications Page', () => {
     const np = new NotificationsPage(page);
     await np.goto();
 
-    const unreadTab = page.getByRole('button', { name: /غير مقروء/ });
+    const unreadTab = page.getByRole('button', { name: /غير مقروء/ }).first();
     await expect(unreadTab).toBeVisible({ timeout: 8000 });
     const badge = unreadTab.locator('.bg-red-500');
     await expect(badge).toBeVisible();

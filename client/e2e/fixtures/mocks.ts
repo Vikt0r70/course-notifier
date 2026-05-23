@@ -12,6 +12,8 @@ const testUser = {
   major: 'علوم الحاسوب',
   onboardingCompleted: true,
   avatarUrl: null,
+  hasPassword: true,
+  age: 21,
   notifyOnOpen: true,
   notifyOnClose: false,
   notifyOnSimilarCourse: true,
@@ -49,6 +51,18 @@ export const profile = testUser;
 export const courses = testCourses;
 export const filters = filterOptions;
 
+export async function setupAuthToken(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('token', 'e2e-test-jwt-token');
+  });
+}
+
+export async function clearAuthToken(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.removeItem('token');
+  });
+}
+
 export async function mockAuthEndpoints(page: Page) {
   await page.route('**/api/auth/profile', (route) => {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: testUser }) });
@@ -73,35 +87,45 @@ export async function mockAuthEndpoints(page: Page) {
 }
 
 export async function mockCourseEndpoints(page: Page) {
+  await page.route('**/api/courses/stats', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { total: testCourses.length, open: 3, closed: 2 },
+      }),
+    });
+  });
+
+  await page.route('**/api/courses/filter-options', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          faculties: filterOptions.faculties,
+          programs: filterOptions.programs,
+          timeShifts: filterOptions.timeShifts,
+        },
+      }),
+    });
+  });
+
   await page.route('**/api/courses?**', (route) => {
-    const url = route.request().url();
-    if (url.includes('filter-options')) {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            faculties: filterOptions.faculties,
-            programs: filterOptions.programs,
-            timeShifts: filterOptions.timeShifts,
-          },
-        }),
-      });
-    } else {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            courses: testCourses,
-            pagination: { page: 1, limit: 100, total: testCourses.length, totalPages: 1 },
-            stats: { total: testCourses.length, open: 3, closed: 2 },
-          },
-        }),
-      });
-    }
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          courses: testCourses,
+          pagination: { page: 1, limit: 5000, total: testCourses.length, totalPages: 1 },
+          stats: { total: testCourses.length, open: 3, closed: 2 },
+        },
+      }),
+    });
   });
 }
 
@@ -135,7 +159,16 @@ export async function mockAllEndpoints(page: Page) {
       }),
     });
   });
-  await page.route('**/api/notifications?**', (route) => {
+  await page.route('**/api/notifications**', (route) => {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: { notifications: [], unreadCount: 0 } }) });
+  });
+
+  await page.route('**/api/watchlist**', (route) => {
+    const method = route.request().method();
+    if (method === 'GET') {
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [] }) });
+    } else {
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
+    }
   });
 }

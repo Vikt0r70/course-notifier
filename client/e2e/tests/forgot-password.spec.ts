@@ -1,26 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { ForgotPasswordPage } from '../pages';
 
-const testUser = {
-  id: 1,
-  email: 'student@university.edu',
-  username: 'Test Student',
-  isAdmin: false,
-  isEmailVerified: true,
-  faculty: 'الهندسة',
-  studyType: 'بكالوريوس',
-  timeShift: 'صباحي',
-  major: 'علوم الحاسوب',
-  onboardingCompleted: true,
-  avatarUrl: null,
-  notifyOnOpen: true,
-  notifyOnClose: false,
-  notifyOnSimilarCourse: true,
-  notifyByEmail: true,
-  notifyByWeb: true,
-};
-
 function mockForgotPasswordEndpoints(page: import('@playwright/test').Page) {
+  page.route('**/api/auth/profile', (route) => {
+    route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ success: false, message: 'Unauthorized' }) });
+  });
+
   page.route('**/api/auth/forgot-password', (route) => {
     route.fulfill({
       status: 200,
@@ -50,26 +35,6 @@ function mockForgotPasswordEndpoints(page: import('@playwright/test').Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ success: true, message: 'Password reset successful' }),
-    });
-  });
-
-  page.route('**/api/auth/login', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        message: 'Login successful',
-        data: { token: 'test-jwt-token', user: testUser },
-      }),
-    });
-  });
-
-  page.route('**/api/auth/profile', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: testUser }),
     });
   });
 }
@@ -165,6 +130,66 @@ test.describe('Forgot Password Page', () => {
   });
 
   test('auto-login after successful password reset navigates to /dashboard', async ({ page }) => {
+    await page.route('**/api/auth/login', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'Login successful',
+          data: {
+            token: 'test-jwt-token',
+            user: {
+              id: 1,
+              email: 'student@university.edu',
+              username: 'Test Student',
+              isAdmin: false,
+              isEmailVerified: true,
+              faculty: 'الهندسة',
+              studyType: 'بكالوريوس',
+              timeShift: 'صباحي',
+              major: 'علوم الحاسوب',
+              onboardingCompleted: true,
+              avatarUrl: null,
+              notifyOnOpen: true,
+              notifyOnClose: false,
+              notifyOnSimilarCourse: true,
+              notifyByEmail: true,
+              notifyByWeb: true,
+            },
+          },
+        }),
+      });
+    });
+
+    await page.route('**/api/auth/profile', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: 1,
+            email: 'student@university.edu',
+            username: 'Test Student',
+            isAdmin: false,
+            isEmailVerified: true,
+            faculty: 'الهندسة',
+            studyType: 'بكالوريوس',
+            timeShift: 'صباحي',
+            major: 'علوم الحاسوب',
+            onboardingCompleted: true,
+            avatarUrl: null,
+            notifyOnOpen: true,
+            notifyOnClose: false,
+            notifyOnSimilarCourse: true,
+            notifyByEmail: true,
+            notifyByWeb: true,
+          },
+        }),
+      });
+    });
+
     const forgotPasswordPage = new ForgotPasswordPage(page);
     await forgotPasswordPage.goto();
 

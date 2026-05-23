@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../pages';
-import { mockAuthEndpoints } from '../fixtures/mocks';
 
 test.describe('Login Page', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthEndpoints(page);
+    await page.route('**/api/auth/profile', (route) => {
+      route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ success: false, message: 'Unauthorized' }) });
+    });
   });
 
   test('renders login form with email and password fields', async ({ page }) => {
@@ -74,6 +75,34 @@ test.describe('Login Page', () => {
               notifyByEmail: true,
               notifyByWeb: true,
             },
+          },
+        }),
+      });
+    });
+
+    await page.route('**/api/auth/profile', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: 1,
+            email: 'student@university.edu',
+            username: 'Test Student',
+            isAdmin: false,
+            isEmailVerified: true,
+            faculty: 'الهندسة',
+            studyType: 'بكالوريوس',
+            timeShift: 'صباحي',
+            major: 'علوم الحاسوب',
+            onboardingCompleted: true,
+            avatarUrl: null,
+            notifyOnOpen: true,
+            notifyOnClose: false,
+            notifyOnSimilarCourse: true,
+            notifyByEmail: true,
+            notifyByWeb: true,
           },
         }),
       });

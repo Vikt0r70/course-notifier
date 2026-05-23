@@ -1,96 +1,15 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { LandingPage, LoginPage } from '../pages';
-import { profile, courses, filters } from '../fixtures/mocks';
-
-async function mockLandingData(page: Page) {
-  await page.route('**/api/courses?**', (route) => {
-    const url = route.request().url();
-    if (url.includes('filter-options')) {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            faculties: filters.faculties,
-            programs: filters.programs,
-            timeShifts: filters.timeShifts,
-          },
-        }),
-      });
-    } else {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            courses,
-            pagination: { page: 1, limit: 100, total: courses.length, totalPages: 1 },
-            stats: { total: courses.length, open: 3, closed: 2 },
-          },
-        }),
-      });
-    }
-  });
-
-  await page.route('**/api/config/faculties', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: {
-          bachelor: filters.faculties,
-          graduate: filters.programs,
-        },
-      }),
-    });
-  });
-
-  await page.route('**/api/config/majors', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: {
-          'الهندسة': ['هندسة البرمجيات', 'الهندسة المدنية'],
-          'تكنولوجيا المعلومات': ['علم الحاسوب', 'الأمن السيبراني'],
-          'العلوم': ['الرياضيات', 'الفيزياء'],
-        },
-      }),
-    });
-  });
-}
-
-async function setupGuest(page: Page) {
-  await page.evaluate(() => localStorage.removeItem('token'));
-  await page.route('**/api/auth/profile', (route) => {
-    route.fulfill({
-      status: 401,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: false, message: 'Unauthorized' }),
-    });
-  });
-  await mockLandingData(page);
-}
-
-async function setupAuth(page: Page) {
-  await page.evaluate(() => localStorage.setItem('token', 'test-jwt-token'));
-  await page.route('**/api/auth/profile', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: profile }),
-    });
-  });
-  await mockLandingData(page);
-}
+import { profile } from '../fixtures/mocks';
+import { mockAuthEndpoints, mockCourseEndpoints, mockAllEndpoints, setupAuthToken, clearAuthToken } from '../fixtures/mocks';
 
 test.describe('Guest User - Landing Page', () => {
   test.beforeEach(async ({ page }) => {
-    await setupGuest(page);
+    await clearAuthToken(page);
+    await page.route('**/api/auth/profile', (route) => {
+      route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ success: false }) });
+    });
+    await mockCourseEndpoints(page);
   });
 
   test('Watchlist nav link is NOT visible', async ({ page }) => {
@@ -111,11 +30,17 @@ test.describe('Guest User - Landing Page', () => {
     ).not.toBeVisible();
   });
 
-  test('Sign In and Sign Up buttons ARE visible in navbar', async ({ page }) => {
+  test('Sign In button IS visible in navbar', async ({ page }) => {
     const landing = new LandingPage(page);
     await landing.goto();
 
     await expect(landing.signInButton).toBeVisible();
+  });
+
+  test('Sign Up button IS visible in navbar', async ({ page }) => {
+    const landing = new LandingPage(page);
+    await landing.goto();
+
     await expect(landing.signUpButton).toBeVisible();
   });
 
@@ -139,15 +64,7 @@ test.describe('Guest User - Landing Page', () => {
     ).not.toBeVisible();
   });
 
-  test('clicking star on course shows toast/login prompt, not watchlist mutation', async ({ page }) => {
-    await page.route('**/api/watchlist', (route) => {
-      route.fulfill({
-        status: 401,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: false, message: 'Unauthorized' }),
-      });
-    });
-
+  test('clicking star on course shows login prompt, not watchlist mutation', async ({ page }) => {
     const landing = new LandingPage(page);
     await landing.goto();
 
@@ -159,19 +76,21 @@ test.describe('Guest User - Landing Page', () => {
     }
 
     await expect(
-      page.getByText(/Sign in|تسجيل|login/i),
+      page.getByText(/Sign in|تسجيل|login/i).first(),
     ).toBeVisible({ timeout: 5000 });
   });
 });
 
-test.describe('Authenticated User - Landing Page', () => {
+test.describe('Authenticated User - Dashboard', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page);
+    await setupAuthToken(page);
+    await mockAllEndpoints(page);
   });
 
   test('Watchlist nav link IS visible', async ({ page }) => {
-    const landing = new LandingPage(page);
-    await landing.goto();
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     await expect(
       page.getByRole('link', { name: /Watchlist|المتابعة/i }),
@@ -179,8 +98,9 @@ test.describe('Authenticated User - Landing Page', () => {
   });
 
   test('Notifications nav link IS visible', async ({ page }) => {
-    const landing = new LandingPage(page);
-    await landing.goto();
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     await expect(
       page.getByRole('link', { name: /Notifications|الإشعارات/i }),
@@ -188,25 +108,30 @@ test.describe('Authenticated User - Landing Page', () => {
   });
 
   test('Sign In and Sign Up buttons are NOT visible', async ({ page }) => {
-    const landing = new LandingPage(page);
-    await landing.goto();
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
-    await expect(landing.signInButton).not.toBeVisible();
-    await expect(landing.signUpButton).not.toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /Sign In|تسجيل الدخول/i }).first(),
+    ).not.toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /Sign Up|إنشاء حساب/i }).first(),
+    ).not.toBeVisible();
   });
 
   test('User dropdown/avatar IS visible', async ({ page }) => {
-    const landing = new LandingPage(page);
-    await landing.goto();
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
-    await expect(
-      page.getByText(profile.username),
-    ).toBeVisible();
+    await expect(page.getByText(profile.username)).toBeVisible();
   });
 
   test('Report Issue button IS visible', async ({ page }) => {
-    const landing = new LandingPage(page);
-    await landing.goto();
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     await expect(
       page.getByRole('button', { name: /Report Issue|Report a Problem/i }),
@@ -215,39 +140,31 @@ test.describe('Authenticated User - Landing Page', () => {
 });
 
 test.describe('PublicRoute Redirect', () => {
-  test('Login page redirects authenticated user to /dashboard', async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('token', 'test-jwt-token'));
+  test.beforeEach(async ({ page }) => {
+    await setupAuthToken(page);
+  });
 
-    await page.route('**/api/auth/profile', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: profile }),
-      });
-    });
+  test('/login redirects to /dashboard when already authenticated', async ({ page }) => {
+    await mockAuthEndpoints(page);
 
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
+    await page.goto('/login');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(500);
 
     await expect(page).toHaveURL(/dashboard/, { timeout: 8000 });
   });
 
-  test('Login page shows form for unauthenticated user', async ({ page }) => {
-    await page.evaluate(() => localStorage.removeItem('token'));
-
+  test('/login shows login form when NOT authenticated', async ({ page }) => {
+    await clearAuthToken(page);
     await page.route('**/api/auth/profile', (route) => {
-      route.fulfill({
-        status: 401,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: false, message: 'Unauthorized' }),
-      });
+      route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ success: false }) });
     });
 
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
-    await expect(loginPage.signInButton).toBeVisible();
-    await expect(loginPage.emailInput).toBeVisible();
-    await expect(loginPage.passwordInput).toBeVisible();
+    await expect(loginPage.signInButton.first()).toBeVisible();
+    await expect(loginPage.emailInput.first()).toBeVisible();
+    await expect(loginPage.passwordInput.first()).toBeVisible();
   });
 });

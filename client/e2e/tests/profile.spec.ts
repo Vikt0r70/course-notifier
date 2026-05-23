@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { ProfilePage } from '../pages';
+import { setupAuthToken } from '../fixtures/mocks';
 
 const userWithPassword = {
   id: 1,
@@ -81,13 +82,16 @@ function mockConfigEndpoints(page: any) {
 async function setupProfilePage(page: any, user = userWithPassword) {
   await mockProfileEndpoints(page, user);
   await mockConfigEndpoints(page);
-  await page.evaluate(() => localStorage.setItem('token', 'test-jwt'));
   const profilePage = new ProfilePage(page);
   await profilePage.goto();
   return profilePage;
 }
 
 test.describe('Profile Settings Page', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthToken(page);
+  });
+
   test('displays user data in view mode (username, email, studyType, faculty, major)', async ({ page }) => {
     await setupProfilePage(page);
 
@@ -119,6 +123,10 @@ test.describe('Profile Settings Page', () => {
 });
 
 test.describe('Profile Edit Mode', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthToken(page);
+  });
+
   test('edit button toggles to edit mode and shows save/cancel buttons', async ({ page }) => {
     const profilePage = await setupProfilePage(page);
 
@@ -206,6 +214,10 @@ test.describe('Profile Edit Mode', () => {
 });
 
 test.describe('Password Section — hasPassword false', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthToken(page);
+  });
+
   test('"Set a Password" button appears when hasPassword is false', async ({ page }) => {
     await setupProfilePage(page, userWithoutPassword);
 
@@ -243,6 +255,10 @@ test.describe('Password Section — hasPassword false', () => {
 });
 
 test.describe('Password Section — hasPassword true', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthToken(page);
+  });
+
   test('"Change Password" button appears when hasPassword is true', async ({ page }) => {
     await setupProfilePage(page, userWithPassword);
 
@@ -290,6 +306,10 @@ test.describe('Password Section — hasPassword true', () => {
 });
 
 test.describe('Password Validation', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthToken(page);
+  });
+
   test('password confirmation mismatch shows error', async ({ page }) => {
     await setupProfilePage(page, userWithoutPassword);
 
