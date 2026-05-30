@@ -18,7 +18,8 @@ interface CourseAttributes {
   studyType: string;
   timeShift?: string;
   period?: string;
-  firstOpenedAt?: Date;  // When this course first became open (for "newly opened" filter)
+  source?: string;
+  firstOpenedAt?: Date;
   lastUpdated?: Date;
   createdAt?: Date;
 }
@@ -42,6 +43,7 @@ class Course extends Model<CourseAttributes, CourseCreationAttributes> implement
   public studyType!: string;
   public timeShift?: string;
   public period?: string;
+  public source?: string;
   public firstOpenedAt?: Date;
   public lastUpdated!: Date;
   public readonly createdAt!: Date;
@@ -118,6 +120,11 @@ Course.init(
     },
     period: {
       type: DataTypes.STRING(100),
+    },
+    source: {
+      type: DataTypes.STRING(50),
+      defaultValue: 'public',
+      field: 'source',
     },
     firstOpenedAt: {
       type: DataTypes.DATE,

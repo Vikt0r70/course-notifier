@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import sequelize from '../../database/connection';
-import ScraperService from './ScraperService';
+import { getActiveScraper } from './ScraperFactory';
 
 async function main() {
   try {
@@ -12,7 +12,8 @@ async function main() {
     console.log(`📍 Host: ${process.env.DATABASE_URL?.split('@')[1]?.split('/')[0] || 'localhost'}`);
     console.log('='.repeat(60));
 
-    await ScraperService.scrapeAll();
+    const Scraper = await getActiveScraper();
+    await Scraper.scrapeAll();
     
     console.log('\n🎉 Scraper process exiting successfully\n');
     process.exit(0);

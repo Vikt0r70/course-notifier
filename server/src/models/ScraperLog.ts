@@ -4,6 +4,7 @@ import sequelize from '../database/connection';
 interface ScraperLogAttributes {
   id: number;
   status: string;
+  source?: string;
   coursesScraped: number;
   coursesAdded: number;
   coursesUpdated: number;
@@ -18,6 +19,7 @@ interface ScraperLogCreationAttributes extends Optional<ScraperLogAttributes, 'i
 class ScraperLog extends Model<ScraperLogAttributes, ScraperLogCreationAttributes> implements ScraperLogAttributes {
   public id!: number;
   public status!: string;
+  public source?: string;
   public coursesScraped!: number;
   public coursesAdded!: number;
   public coursesUpdated!: number;
@@ -37,6 +39,11 @@ ScraperLog.init(
     status: {
       type: DataTypes.STRING(50),
       allowNull: false,
+    },
+    source: {
+      type: DataTypes.STRING(50),
+      defaultValue: 'public',
+      field: 'source',
     },
     coursesScraped: {
       type: DataTypes.INTEGER,

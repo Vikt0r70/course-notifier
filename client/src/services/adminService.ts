@@ -100,4 +100,20 @@ export const adminService = {
     const response = await api.post('/admin/toggle-watch-all');
     return response.data;
   },
+
+  // Portal Credentials
+  async getPortalCredentials() {
+    const response = await api.get('/admin/portal-credentials');
+    return response.data.data;
+  },
+
+  async updatePortalCredentials(credentials: { username: string; password: string }) {
+    const response = await api.put('/admin/portal-credentials', credentials);
+    return response.data;
+  },
+
+  async testPortalConnection() {
+    const response = await api.post('/admin/portal/test-connection');
+    return response.data;
+  },
 };

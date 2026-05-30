@@ -42,4 +42,10 @@ export default {
     intervalMinutes: parseInt(process.env.SCRAPER_INTERVAL_MINUTES || '60', 10),
     autoSync: process.env.SCRAPER_AUTO_SYNC === 'true',
   },
+
+  portal: {
+    username: process.env.PORTAL_USERNAME || '',
+    password: process.env.PORTAL_PASSWORD || '',
+    encryptionKey: process.env.PORTAL_ENCRYPTION_KEY || '',
+  },
 };

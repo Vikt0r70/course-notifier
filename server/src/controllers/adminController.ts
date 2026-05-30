@@ -3,10 +3,12 @@ import { Op } from 'sequelize';
 
 import { User, Course, Watchlist, Notification, ScraperLog, SystemSetting, ProblemReport } from '../models';
 import { AuthRequest } from '../middleware/auth';
-import ScraperService from '../services/scraper/ScraperService';
+import { getActiveScraper, getActiveScraperSource } from '../services/scraper/ScraperFactory';
 import ScraperScheduler from '../services/scraper/ScraperScheduler';
+import PortalScraperService from '../services/scraper/PortalScraperService';
 import EmailService from '../services/email/EmailService';
 import NotificationService from '../services/notification/NotificationService';
+import { encryptPassword } from '../utils/encryption';
 
 // In-memory log buffer for real-time logs
 const serverLogs: { timestamp: Date; level: string; message: string }[] = [];
@@ -193,9 +195,10 @@ export const getAllWatchlists = async (req: AuthRequest, res: Response) => {
 
 export const runScraper = async (req: AuthRequest, res: Response) => {
   try {
-    ScraperService.scrapeAll()
+    const Scraper = await getActiveScraper();
+    Scraper.scrapeAll()
       .then(() => console.log('✅ Manual scraper run completed'))
-      .catch((error) => console.error('❌ Manual scraper run failed:', error));
+      .catch((error: any) => console.error('❌ Manual scraper run failed:', error));
 
     res.json({
       success: true,
@@ -379,7 +382,9 @@ export const getDatabaseLogs = async (req: AuthRequest, res: Response) => {
 // Scraper Status (real-time)
 export const getScraperStatus = async (req: AuthRequest, res: Response) => {
   try {
-    const isRunning = ScraperService.isCurrentlyRunning();
+    const activeSource = await getActiveScraperSource();
+    const activeScraper = await getActiveScraper();
+    const isRunning = activeScraper.isCurrentlyRunning();
     const lastLog = await ScraperLog.findOne({
       order: [['startedAt', 'DESC']],
     });
@@ -388,8 +393,10 @@ export const getScraperStatus = async (req: AuthRequest, res: Response) => {
       success: true,
       data: {
         isRunning,
+        activeSource,
         lastRun: lastLog ? {
           status: lastLog.status,
+          source: lastLog.source,
           startedAt: lastLog.startedAt,
           completedAt: lastLog.completedAt,
           coursesScraped: lastLog.coursesScraped,
@@ -441,5 +448,62 @@ export const toggleWatchAllCourses = async (req: AuthRequest, res: Response) => 
     });
   } catch (error: any) {
     console.error(error); res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Portal Credentials
+export const getPortalCredentials = async (req: AuthRequest, res: Response) => {
+  try {
+    const username = await SystemSetting.findOne({ where: { key: 'portal_username' } });
+    const hasPassword = await SystemSetting.findOne({ where: { key: 'portal_password' } });
+
+    res.json({
+      success: true,
+      data: {
+        username: username?.value || '',
+        hasPassword: !!hasPassword?.value,
+      },
+    });
+  } catch (error: any) {
+    console.error(error); res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updatePortalCredentials = async (req: AuthRequest, res: Response) => {
+  try {
+    const { username, password } = req.body;
+
+    if (username) {
+      await SystemSetting.upsert({ key: 'portal_username', value: username });
+    }
+    if (password) {
+      const encrypted = encryptPassword(password);
+      await SystemSetting.upsert({ key: 'portal_password', value: encrypted });
+    }
+
+    res.json({ success: true, message: 'Portal credentials updated' });
+  } catch (error: any) {
+    console.error(error); res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const testPortalConnection = async (req: AuthRequest, res: Response) => {
+  try {
+    const credentials = await PortalScraperService.getCredentials();
+    if (!credentials.username || !credentials.password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Portal credentials not configured',
+      });
+    }
+
+    await PortalScraperService.testLogin(credentials.username, credentials.password);
+
+    res.json({ success: true, message: 'Portal connection successful' });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: `Connection failed: ${error.message}`,
+    });
   }
 };

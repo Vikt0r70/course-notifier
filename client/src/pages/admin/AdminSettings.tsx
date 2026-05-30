@@ -22,7 +22,9 @@ import {
   Bell,
   Activity,
   Loader2,
-  Filter
+  Filter,
+  Shield,
+  Globe
 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import { Card, Button, Input, Badge, Spinner } from '../../components/ui';
@@ -35,7 +37,10 @@ const AdminSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('scraper');
   const [testEmail, setTestEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showPortalPassword, setShowPortalPassword] = useState(false);
   const [logFilter, setLogFilter] = useState<string>('all');
+  const [portalUsername, setPortalUsername] = useState('');
+  const [portalPassword, setPortalPassword] = useState('');
   
   // SMTP form state
   const [smtpForm, setSmtpForm] = useState({
@@ -84,6 +89,19 @@ const AdminSettings: React.FC = () => {
   const { data: watchAllStatus, isLoading: watchAllLoading } = useQuery(
     'watchAllStatus',
     adminService.getWatchAllCoursesStatus
+  );
+
+  // Portal Credentials query
+  const { data: portalCredentials, isLoading: portalCredsLoading } = useQuery(
+    'portalCredentials',
+    adminService.getPortalCredentials,
+    {
+      onSuccess: (data) => {
+        if (data) {
+          setPortalUsername(data.username || '');
+        }
+      }
+    }
   );
 
   // Mutations
@@ -157,6 +175,33 @@ const AdminSettings: React.FC = () => {
       toast.error('Failed to toggle Watch All Courses');
     }
   });
+
+  const updateCredentialsMutation = useMutation(
+    (credentials: { username: string; password: string }) => adminService.updatePortalCredentials(credentials),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('portalCredentials');
+        setPortalPassword('');
+        toast.success('Portal credentials saved');
+      },
+      onError: () => {
+        toast.error('Failed to save portal credentials');
+      }
+    }
+  );
+
+  const testConnectionMutation = useMutation(
+    () => adminService.testPortalConnection(),
+    {
+      onSuccess: (data) => {
+        toast.success(data.message || 'Portal connection successful');
+      },
+      onError: (error: any) => {
+        const message = error?.response?.data?.message || 'Connection test failed';
+        toast.error(message);
+      }
+    }
+  );
 
   const tabs = [
     { id: 'scraper' as TabType, label: 'Scraper', icon: RefreshCw },
@@ -312,7 +357,134 @@ const AdminSettings: React.FC = () => {
                   </div>
                 </label>
               </div>
+
+              {/* Active Source Display */}
+              <div className="flex items-center gap-3 pt-2 border-t border-zinc-700/30">
+                <span className="text-sm text-zinc-400">
+                  Source: <span className="text-zinc-200 capitalize">{scraperStatus?.activeSource || 'public'}</span>
+                </span>
+              </div>
             </div>
+          </Card>
+
+          {/* Scraper Source Selection */}
+          <Card>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-violet-500/20">
+                <Globe className="w-5 h-5 text-violet-400" />
+              </div>
+              <h2 className="text-xl font-semibold text-zinc-100">Scraper Source</h2>
+            </div>
+
+            <div className="p-4 rounded-lg bg-zinc-800/50 border border-zinc-700/30 mb-4">
+              <label className="block text-sm font-medium text-zinc-300 mb-3">
+                Select Data Source
+              </label>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => updateSettingMutation.mutate({
+                    key: 'scraper_source',
+                    value: 'public',
+                  })}
+                  className={cn(
+                    'flex-1 p-3 rounded-lg border transition-all',
+                    settings?.scraper_source === 'public'
+                      ? 'bg-violet-500/20 border-violet-500/50 text-violet-300'
+                      : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:text-zinc-300'
+                  )}
+                >
+                  <div className="font-medium">Public Website</div>
+                  <div className="text-xs mt-1 opacity-70">
+                    Scrapes zu.edu.jo (Course_Schedule.aspx)
+                  </div>
+                </button>
+                <button
+                  onClick={() => updateSettingMutation.mutate({
+                    key: 'scraper_source',
+                    value: 'portal',
+                  })}
+                  className={cn(
+                    'flex-1 p-3 rounded-lg border transition-all',
+                    settings?.scraper_source === 'portal'
+                      ? 'bg-violet-500/20 border-violet-500/50 text-violet-300'
+                      : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:text-zinc-300'
+                  )}
+                >
+                  <div className="font-medium">Student Portal</div>
+                  <div className="text-xs mt-1 opacity-70">
+                    Scrapes eservices.zu.edu.jo (Authenticated)
+                  </div>
+                </button>
+              </div>
+              {settings?.scraper_source === 'portal' && (
+                <p className="text-xs text-amber-400/70 mt-3">
+                  <AlertTriangle className="w-3 h-3 inline mr-1" />
+                  Switching to portal will re-sync bachelor course data. Graduate courses will not be updated.
+                </p>
+              )}
+            </div>
+
+            {/* Portal Credentials (only shown when portal is selected) */}
+            {settings?.scraper_source === 'portal' && (
+              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <h3 className="text-sm font-medium text-amber-300 mb-3">
+                  <Shield className="w-4 h-4 inline mr-1" />
+                  Portal Credentials
+                </h3>
+                {portalCredsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Spinner />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Input
+                      placeholder="Student ID (e.g., 202305077)"
+                      value={portalUsername}
+                      onChange={(e) => setPortalUsername(e.target.value)}
+                    />
+                    <div className="relative">
+                      <Input
+                        type={showPortalPassword ? 'text' : 'password'}
+                        placeholder="Portal Password"
+                        value={portalPassword}
+                        onChange={(e) => setPortalPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPortalPassword(!showPortalPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                      >
+                        {showPortalPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {portalCredentials?.hasPassword && (
+                      <p className="text-xs text-zinc-500">Password is already saved (enter new one to update)</p>
+                    )}
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => updateCredentialsMutation.mutate({
+                          username: portalUsername,
+                          password: portalPassword,
+                        })}
+                        disabled={updateCredentialsMutation.isLoading || !portalUsername || !portalPassword}
+                      >
+                        {updateCredentialsMutation.isLoading ? 'Saving...' : 'Save Credentials'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => testConnectionMutation.mutate()}
+                        disabled={testConnectionMutation.isLoading || !portalCredentials?.hasPassword}
+                      >
+                        {testConnectionMutation.isLoading ? 'Testing...' : 'Test Connection'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-amber-400/70 mt-3">
+                  Credentials are encrypted server-side before storage.
+                </p>
+              </div>
+            )}
           </Card>
 
           {/* Scraper Logs */}
@@ -336,12 +508,17 @@ const AdminSettings: React.FC = () => {
                     className="p-4 rounded-lg bg-zinc-800/50 border border-zinc-700/30"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                      <Badge variant={log.status === 'completed' ? 'success' : log.status === 'failed' ? 'danger' : 'warning'}>
-                        {log.status === 'completed' && <CheckCircle className="w-3 h-3" />}
-                        {log.status === 'failed' && <XCircle className="w-3 h-3" />}
-                        {log.status === 'running' && <RefreshCw className="w-3 h-3 animate-spin" />}
-                        {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={log.status === 'completed' ? 'success' : log.status === 'failed' ? 'danger' : 'warning'}>
+                          {log.status === 'completed' && <CheckCircle className="w-3 h-3" />}
+                          {log.status === 'failed' && <XCircle className="w-3 h-3" />}
+                          {log.status === 'running' && <RefreshCw className="w-3 h-3 animate-spin" />}
+                          {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
+                        </Badge>
+                        <span className="text-xs text-zinc-500 capitalize">
+                          {log.source || 'public'}
+                        </span>
+                      </div>
                       <span className="text-sm text-zinc-500">
                         {new Date(log.startedAt).toLocaleString('en-US', {
                           dateStyle: 'medium',

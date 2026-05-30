@@ -36,4 +36,9 @@ router.get('/scraper/status', adminController.getScraperStatus);
 router.get('/watch-all-status', adminController.getWatchAllCoursesStatus);
 router.post('/toggle-watch-all', adminController.toggleWatchAllCourses);
 
+// Portal Credentials
+router.get('/portal-credentials', adminController.getPortalCredentials);
+router.put('/portal-credentials', adminController.updatePortalCredentials);
+router.post('/portal/test-connection', adminController.testPortalConnection);
+
 export default router;

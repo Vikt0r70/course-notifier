@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import ScraperService from './ScraperService';
+import { getActiveScraper } from './ScraperFactory';
 import { SystemSetting } from '../../models';
 
 class ScraperScheduler {
@@ -42,7 +42,8 @@ class ScraperScheduler {
       this.isRunning = true;
       console.log(`⏰ Running scheduled scraper (every ${intervalMinutes} minutes)`);
       try {
-        await ScraperService.scrapeAll();
+        const Scraper = await getActiveScraper();
+        await Scraper.scrapeAll();
       } catch (error) {
         console.error('Scheduled scraper failed:', error);
       } finally {
