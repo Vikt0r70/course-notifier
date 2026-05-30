@@ -436,7 +436,7 @@ class PortalScraperService {
         const time = data[3] || '';
         const days = data[4] || '';
         const room = data[5] || '';
-        const creditHours = data[6] || '';
+        const creditHours = (data[6] || '').substring(0, 10);
         const instructor = data[7] || '';
 
         if (!code || !name) continue;
@@ -489,22 +489,60 @@ class PortalScraperService {
     console.log(`\n🔄 Processing ${scrapedCourses.length} scraped courses...\n`);
 
     for (const scraped of scrapedCourses) {
-      const key = `${scraped.code}_${scraped.section}_${scraped.faculty}_${scraped.period}`;
-      const existing = existingMap.get(key);
+      try {
+        const key = `${scraped.code}_${scraped.section}_${scraped.faculty}_${scraped.period}`;
+        const existing = existingMap.get(key);
 
-      if (existing) {
-        const statusChanged = existing.isOpen !== scraped.isOpen;
-        const hasChanges =
-          statusChanged ||
-          existing.courseName !== scraped.name ||
-          existing.instructor !== scraped.instructor ||
-          existing.room !== scraped.room ||
-          existing.days !== scraped.days ||
-          existing.time !== scraped.time;
+        if (existing) {
+          const statusChanged = existing.isOpen !== scraped.isOpen;
+          const hasChanges =
+            statusChanged ||
+            existing.courseName !== scraped.name ||
+            existing.instructor !== scraped.instructor ||
+            existing.room !== scraped.room ||
+            existing.days !== scraped.days ||
+            existing.time !== scraped.time;
 
-        if (hasChanges) {
-          const justOpened = statusChanged && scraped.isOpen;
-          const updateData: any = {
+          if (hasChanges) {
+            const justOpened = statusChanged && scraped.isOpen;
+            const updateData: any = {
+              courseName: scraped.name,
+              creditHours: scraped.creditHours,
+              room: scraped.room,
+              instructor: scraped.instructor,
+              days: scraped.days,
+              time: scraped.time,
+              teachingMethod: scraped.method,
+              isOpen: scraped.isOpen,
+              status: scraped.isOpen ? 'Open' : 'Closed',
+              source: 'portal',
+              lastUpdated: new Date(),
+            };
+
+            if (justOpened && !existing.firstOpenedAt) {
+              updateData.firstOpenedAt = new Date();
+            }
+
+            await existing.update(updateData);
+            updated++;
+
+            if (statusChanged) {
+              statusChanges++;
+              const statusIcon = scraped.isOpen ? '🟢' : '🔴';
+              const statusText = scraped.isOpen ? 'OPENED' : 'CLOSED';
+              console.log(`${statusIcon} ${statusText}: ${scraped.code} - ${scraped.name.substring(0, 40)}`);
+
+              await NotificationService.notifyAdminsOfCourseChanges(
+                scraped.isOpen ? 'opened' : 'closed',
+                existing
+              );
+            }
+          }
+          existingMap.delete(key);
+        } else {
+          const newCourse = await Course.create({
+            courseCode: scraped.code,
+            section: scraped.section,
             courseName: scraped.name,
             creditHours: scraped.creditHours,
             room: scraped.room,
@@ -512,58 +550,25 @@ class PortalScraperService {
             days: scraped.days,
             time: scraped.time,
             teachingMethod: scraped.method,
-            isOpen: scraped.isOpen,
             status: scraped.isOpen ? 'Open' : 'Closed',
+            isOpen: scraped.isOpen,
+            faculty: scraped.faculty,
+            studyType: scraped.studyType,
+            timeShift: scraped.period,
+            period: scraped.period,
             source: 'portal',
+            firstOpenedAt: scraped.isOpen ? new Date() : undefined,
             lastUpdated: new Date(),
-          };
+          });
+          added++;
 
-          if (justOpened && !existing.firstOpenedAt) {
-            updateData.firstOpenedAt = new Date();
-          }
+          console.log(`➕ ADDED: ${scraped.code} - ${scraped.name.substring(0, 40)}`);
 
-          await existing.update(updateData);
-          updated++;
-
-          if (statusChanged) {
-            statusChanges++;
-            const statusIcon = scraped.isOpen ? '🟢' : '🔴';
-            const statusText = scraped.isOpen ? 'OPENED' : 'CLOSED';
-            console.log(`${statusIcon} ${statusText}: ${scraped.code} - ${scraped.name.substring(0, 40)}`);
-
-            await NotificationService.notifyAdminsOfCourseChanges(
-              scraped.isOpen ? 'opened' : 'closed',
-              existing
-            );
-          }
+          await NotificationService.notifyAdminsOfCourseChanges('added', newCourse);
         }
-        existingMap.delete(key);
-      } else {
-        const newCourse = await Course.create({
-          courseCode: scraped.code,
-          section: scraped.section,
-          courseName: scraped.name,
-          creditHours: scraped.creditHours,
-          room: scraped.room,
-          instructor: scraped.instructor,
-          days: scraped.days,
-          time: scraped.time,
-          teachingMethod: scraped.method,
-          status: scraped.isOpen ? 'Open' : 'Closed',
-          isOpen: scraped.isOpen,
-          faculty: scraped.faculty,
-          studyType: scraped.studyType,
-          timeShift: scraped.period,
-          period: scraped.period,
-          source: 'portal',
-          firstOpenedAt: scraped.isOpen ? new Date() : undefined,
-          lastUpdated: new Date(),
-        });
-        added++;
-
-        console.log(`➕ ADDED: ${scraped.code} - ${scraped.name.substring(0, 40)}`);
-
-        await NotificationService.notifyAdminsOfCourseChanges('added', newCourse);
+      } catch (courseError: any) {
+        console.error(`   ❌ Error syncing course ${scraped.code} - ${scraped.name.substring(0, 40)}: ${courseError.message}`);
+        // Continue with next course - don't let one bad course crash the whole sync
       }
     }
 
