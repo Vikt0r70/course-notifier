@@ -3,11 +3,38 @@ import { Op } from 'sequelize';
 import { Course, Watchlist } from '../models';
 import { AuthRequest } from '../middleware/auth';
 
+/**
+ * Canonical faculties recognized by the system.
+ * Used to filter out corrupted/invalid faculty names from the database.
+ */
+const VALID_BACHELOR_FACULTIES = [
+  'الشريعة',
+  'الآداب',
+  'العلوم',
+  'الاقتصاد والعلوم الإدارية',
+  'العلوم التربوية',
+  'الحقوق',
+  'العلوم الطبية المساندة',
+  'التمريض',
+  'الهندسة التكنولوجية',
+  'وحدة متطلبات الجامعة',
+  'الصيدلة',
+  'الفنون والتصميم',
+  'الإعلام',
+  'تكنولوجيا المعلومات',
+  'طب الأسنان',
+];
+
+const VALID_FACULTIES = [...VALID_BACHELOR_FACULTIES, 'الدراسات العليا'];
+
 export const getCourses = async (req: AuthRequest, res: Response) => {
   try {
     const { studyType, faculty, timeShift, search, page = 1, limit = 100 } = req.query;
 
-    const where: any = {};
+    const where: any = {
+      // Always filter out courses with invalid/corrupted faculty names
+      faculty: VALID_FACULTIES,
+    };
 
     // Study Type filter
     if (studyType) {
@@ -212,7 +239,9 @@ export const getFilterOptions = async (req: Request, res: Response) => {
       order: [['faculty', 'ASC']],
       raw: true,
     });
-    const faculties = facultiesResult.map((f: any) => f.faculty);
+    const faculties = facultiesResult
+      .map((f: any) => f.faculty)
+      .filter((f: string) => VALID_FACULTIES.includes(f));
 
     // Get distinct time shifts for the selected study type and faculty
     const timeShiftWhere: any = {};
