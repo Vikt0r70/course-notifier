@@ -1,30 +1,44 @@
 // Sentry must be imported first
 import * as Sentry from '@sentry/node';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
+
+// Attempt to load profiling integration (may fail on unsupported Node versions)
+let profilingIntegration: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const profiling = require('@sentry/profiling-node');
+  profilingIntegration = profiling.nodeProfilingIntegration();
+} catch (e) {
+  console.warn('⚠️  Sentry profiling integration unavailable (unsupported Node version). Continuing without CPU profiling.');
+}
+
+// Build integrations array
+const sentryIntegrations: any[] = [
+  Sentry.httpIntegration(),
+  Sentry.expressIntegration(),
+  // Console logging integration - captures console.* as Sentry Logs
+  Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error', 'info', 'debug'] }),
+];
+
+if (profilingIntegration) {
+  sentryIntegrations.push(profilingIntegration);
+}
 
 // Initialize Sentry before other imports
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
-  
+
   // Tracing - sample rate for performance monitoring
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
-  
+
   // Profiling - CPU profiling for performance insights
   profileSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
   profileLifecycle: 'trace',
-  
+
   // Enable Sentry Logs (captures console.log, console.error, etc.)
   enableLogs: true,
-  
-  integrations: [
-    Sentry.httpIntegration(),
-    Sentry.expressIntegration(),
-    // Profiling integration for CPU profiles
-    nodeProfilingIntegration(),
-    // Console logging integration - captures console.* as Sentry Logs
-    Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error', 'info', 'debug'] }),
-  ],
+
+  integrations: sentryIntegrations,
 });
 
 import express from 'express';
