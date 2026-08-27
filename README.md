@@ -32,27 +32,12 @@ Course Notifier helps university students track course availability in real-time
 ## Features
 
 - **Real-time Course Monitoring** - Automated scraping every 5 minutes
-- **Smart Notifications** - Get notified via Email, Web Push, or Mobile (FCM)
+- **Smart Notifications** - Get notified via Email and Web Push
 - **Advanced Filtering** - Filter by faculty, study type, days, time shifts
 - **Watchlist System** - Track specific courses with custom notification preferences
 - **"Newly Opened" Detection** - Special alerts for courses that just opened
-- **Instant Search** - Client-side filtering with 10ms latency
-- **Responsive Design** - Works on desktop and mobile
 - **Admin Dashboard** - Full system management and analytics
-- **RTL Support** - Full Arabic language support
 
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, TypeScript, Vite, TailwindCSS, Zustand |
-| Backend | Node.js, Express, TypeScript, Sequelize ORM |
-| Database | PostgreSQL 15, Redis 7 |
-| Scraper | Puppeteer (Headless Chrome) |
-| Notifications | Nodemailer (SMTP), Web Push API, Firebase Cloud Messaging |
-| Infrastructure | Docker, Docker Compose, Nginx |
-| Monitoring | Sentry (Error tracking & Performance) |
 
 ## Quick Start
 
@@ -107,33 +92,6 @@ docker exec -it course-notifier-server sh
 
 # Run the admin creation script (inside container)
 npm run create-admin
-```
-
-## Project Structure
-
-```
-course-notifier/
-├── client/                 # React Frontend
-│   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── pages/         # Route pages
-│   │   ├── services/      # API service layer
-│   │   ├── store/         # Zustand state management
-│   │   └── types/         # TypeScript definitions
-│   └── Dockerfile.prod
-│
-├── server/                 # Node.js Backend
-│   ├── src/
-│   │   ├── config/        # Configuration
-│   │   ├── models/        # Sequelize models
-│   │   ├── routes/        # Express routes
-│   │   ├── services/      # Business logic
-│   │   └── middleware/    # Auth, validation, etc.
-│   └── Dockerfile
-│
-├── docs/                   # Documentation
-├── docker-compose.yml      # Production compose file
-└── .env.docker.example     # Environment template
 ```
 
 ## API Endpoints
@@ -194,15 +152,10 @@ See `.env.docker.example` for all available configuration options.
 
 ### Production Deployment
 
-1. Set up a VPS with Docker installed
-2. Clone the repository
-3. Create `.env.docker` with production values
-4. Run `docker compose --env-file .env.docker up -d`
-5. Configure reverse proxy (Nginx/Caddy) for HTTPS
-
-### SSL/HTTPS
-
-The application is designed to work behind a reverse proxy. Configure your proxy (Caddy, Nginx, Traefik) to handle SSL termination.
+1. Clone the repository
+2. Create `.env.docker` with production values
+3. Run `docker compose --env-file .env.docker up -d`
+4. Configure reverse proxy (Nginx/Caddy) for HTTPS
 
 ## Extending for Other Universities
 
