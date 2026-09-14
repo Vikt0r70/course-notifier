@@ -217,6 +217,7 @@ class PortalScraperService {
 
       // Scrape each faculty × study type
       let currentTask = 0;
+      const scrapedFaculties = new Set<string>();
 
       console.log('┌' + '─'.repeat(58) + '┐');
       console.log('│ ' + '🎓 BACHELOR PROGRAMS (Portal)'.padEnd(56) + ' │');
@@ -235,12 +236,15 @@ class PortalScraperService {
             allCourses.push(course);
           }
 
-          console.log(`${taskProgress} ✅ Found ${courses.length} courses`);
           if (courses.length > 0) {
+            scrapedFaculties.add(normalizedFacultyName);
             const openCount = courses.filter(c => c.isOpen).length;
             const closedCount = courses.length - openCount;
+            console.log(`${taskProgress} ✅ Found ${courses.length} courses`);
             console.log(`   📊 Open: ${openCount} | Closed: ${closedCount}`);
             console.log(`   📝 Sample: ${courses[0].code} - ${courses[0].name.substring(0, 30)}...`);
+          } else {
+            console.log(`${taskProgress} ⚠️  0 courses found for ${normalizedFacultyName} - ${studyTypeName}`);
           }
           console.log('');
           await this.delay(2000);
@@ -255,7 +259,7 @@ class PortalScraperService {
 
       // Sync to database (scoped to bachelor only)
       console.log('💾 Syncing to database (bachelor courses only)...\n');
-      const { added, updated, removed } = await this.syncDatabase(allCourses);
+      const { added, updated, removed } = await this.syncDatabase(allCourses, scrapedFaculties);
 
       log.status = 'completed';
       log.coursesScraped = allCourses.length;
@@ -375,34 +379,76 @@ class PortalScraperService {
     facultyName: string,
     studyTypeName: string
   ): Promise<ScrapedCourse[]> {
-    try {
-      await page.evaluate((facId, stId) => {
-        const studyType = document.querySelector('select[name=StudyType]') as HTMLSelectElement;
-        const facCode = document.querySelector('select[name=facCode]') as HTMLSelectElement;
+    const maxAttempts = 2;
 
-        if (studyType) {
-          studyType.value = stId;
-          studyType.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        if (facCode) {
-          facCode.value = facId;
-          facCode.dispatchEvent(new Event('change', { bubbles: true }));
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        if (attempt > 1) {
+          console.log(`   🔄 Retrying ${facultyName} - ${studyTypeName} (attempt ${attempt}/${maxAttempts})...`);
+          await this.delay(2000);
         }
 
-        const submitBtn = document.querySelector('button[type=submit]') as HTMLButtonElement;
-        if (submitBtn) {
-          submitBtn.click();
+        // Capture previous table fingerprint to verify updates
+        const previousFingerprint = await page.evaluate(() => {
+          const table = document.querySelector('table');
+          return table ? (table.textContent || '').trim().slice(0, 100) : '';
+        });
+
+        await page.evaluate((facId, stId) => {
+          const studyType = document.querySelector('select[name=StudyType]') as HTMLSelectElement;
+          const facCode = document.querySelector('select[name=facCode]') as HTMLSelectElement;
+
+          if (studyType) {
+            studyType.value = stId;
+            studyType.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          if (facCode) {
+            facCode.value = facId;
+            facCode.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+
+          const submitBtn = document.querySelector('button[type=submit]') as HTMLButtonElement;
+          if (submitBtn) {
+            submitBtn.click();
+          }
+        }, facultyId, studyTypeId);
+
+        // Wait for table mutation or navigation with timeout fallback
+        try {
+          await Promise.race([
+            page.waitForFunction(
+              (prev) => {
+                const table = document.querySelector('table');
+                if (!table) return false;
+                const current = (table.textContent || '').trim().slice(0, 100);
+                return current !== prev;
+              },
+              { timeout: 8000 },
+              previousFingerprint
+            ),
+            page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 8000 }).catch(() => {})
+          ]);
+        } catch {
+          // Fallback if timeout expires without detectable change
         }
-      }, facultyId, studyTypeId);
 
-      await this.delay(4000);
+        // Buffer delay to ensure all table rows are rendered
+        await this.delay(2500);
 
-      return await this.parseCoursesFromPage(page, facultyName, studyTypeName);
+        const courses = await this.parseCoursesFromPage(page, facultyName, studyTypeName);
 
-    } catch (error: any) {
-      console.log(`   ❌ Error scraping ${facultyName}: ${error.message}`);
-      return [];
+        if (courses.length > 0 || attempt === maxAttempts) {
+          return courses;
+        }
+      } catch (error: any) {
+        console.log(`   ❌ Error scraping ${facultyName} (attempt ${attempt}): ${error.message}`);
+        if (attempt === maxAttempts) {
+          return [];
+        }
+      }
     }
+
+    return [];
   }
 
   private async parseCoursesFromPage(
@@ -412,32 +458,79 @@ class PortalScraperService {
   ): Promise<ScrapedCourse[]> {
     return await page.evaluate((faculty, studyType) => {
       const results: ScrapedCourse[] = [];
-      const rows = document.querySelectorAll('table tr');
+      const tables = document.querySelectorAll('table');
+      if (tables.length === 0) return results;
 
-      for (const row of rows) {
+      // Find the main data table
+      let targetTable: HTMLTableElement | null = null;
+      for (const table of Array.from(tables)) {
+        if (table.querySelector('tr td')) {
+          targetTable = table;
+          break;
+        }
+      }
+      if (!targetTable) return results;
+
+      // Dynamically detect column header indices
+      const headers = Array.from(targetTable.querySelectorAll('th')).map(th => (th.textContent || '').trim());
+
+      let codeCol = -1;
+      let sectionCol = -1;
+      let nameCol = -1;
+      let timeCol = -1;
+      let daysCol = -1;
+      let roomCol = -1;
+      let hoursCol = -1;
+      let instructorCol = -1;
+
+      headers.forEach((header, idx) => {
+        if (header.includes('رقم المادة') || header.includes('رمز المادة')) codeCol = idx;
+        else if (header.includes('الشعبة')) sectionCol = idx;
+        else if (header.includes('المادة') || header.includes('اسم المادة')) nameCol = idx;
+        else if (header.includes('الوقت')) timeCol = idx;
+        else if (header.includes('الأيام') || header.includes('الايام')) daysCol = idx;
+        else if (header.includes('القاعة')) roomCol = idx;
+        else if (header.includes('الساعات')) hoursCol = idx;
+        else if (header.includes('المدرس') || header.includes('أستاذ')) instructorCol = idx;
+      });
+
+      // Default fallback indices if table headers weren't identified
+      if (codeCol === -1) codeCol = 0;
+      if (sectionCol === -1) sectionCol = 1;
+      if (nameCol === -1) nameCol = 2;
+      if (timeCol === -1) timeCol = 3;
+      if (daysCol === -1) daysCol = 4;
+      if (roomCol === -1) roomCol = 5;
+      if (hoursCol === -1) hoursCol = 6;
+      if (instructorCol === -1) instructorCol = 7;
+
+      const rows = targetTable.querySelectorAll('tr');
+
+      for (const row of Array.from(rows)) {
         const cols = row.querySelectorAll('td');
-        if (cols.length < 7) continue;
+        if (cols.length < 6) continue;
 
         const data = Array.from(cols).map(col => (col.textContent || '').trim());
 
-        // Parse course code and method from first column
-        const codeMethodMatch = data[0].match(/^(\d+)\s+(.+)$/);
-        const code = codeMethodMatch ? codeMethodMatch[1] : data[0];
-        const method = codeMethodMatch ? codeMethodMatch[2] : '';
+        // Parse course code and teaching method
+        const rawCode = data[codeCol] || '';
+        const codeMethodMatch = rawCode.match(/^(\d+)\s*(.*)$/);
+        const code = codeMethodMatch ? codeMethodMatch[1].trim() : rawCode;
+        const method = codeMethodMatch ? codeMethodMatch[2].trim() : '';
 
-        // Parse section and status from second column
-        const sectionText = data[1];
+        // Parse section and status
+        const sectionText = data[sectionCol] || '';
         const isClosed = sectionText.includes('مغلقة');
         const sectionMatch = sectionText.match(/(\d+)/);
         const section = sectionMatch ? sectionMatch[1] : '1';
 
         // Extract remaining fields
-        const name = data[2] || '';
-        const time = data[3] || '';
-        const days = data[4] || '';
-        const room = data[5] || '';
-        const creditHours = (data[6] || '').substring(0, 10);
-        const instructor = data[7] || '';
+        const name = data[nameCol] || '';
+        const time = data[timeCol] || '';
+        const days = data[daysCol] || '';
+        const room = roomCol !== -1 && roomCol < data.length ? data[roomCol] : '';
+        const creditHours = hoursCol !== -1 && hoursCol < data.length ? data[hoursCol].substring(0, 10) : '';
+        const instructor = instructorCol !== -1 && instructorCol < data.length ? data[instructorCol] : '';
 
         if (!code || !name) continue;
 
@@ -466,7 +559,10 @@ class PortalScraperService {
    * Sync scraped courses to database (scoped to bachelor only)
    * Only fetches existing bachelor courses for comparison, leaving graduate courses untouched
    */
-  private async syncDatabase(scrapedCourses: ScrapedCourse[]): Promise<{ added: number; updated: number; removed: number }> {
+  private async syncDatabase(
+    scrapedCourses: ScrapedCourse[],
+    scrapedFaculties: Set<string>
+  ): Promise<{ added: number; updated: number; removed: number }> {
     if (scrapedCourses.length === 0) {
       console.log('⚠️  No courses to sync');
       return { added: 0, updated: 0, removed: 0 };
@@ -568,18 +664,35 @@ class PortalScraperService {
         }
       } catch (courseError: any) {
         console.error(`   ❌ Error syncing course ${scraped.code} - ${scraped.name.substring(0, 40)}: ${courseError.message}`);
-        // Continue with next course - don't let one bad course crash the whole sync
       }
     }
 
-    // Remove bachelor courses no longer in scraped data
-    const toRemove = Array.from(existingMap.values());
-    for (const course of toRemove) {
-      console.log(`➖ REMOVED: ${course.courseCode} - ${course.courseName.substring(0, 40)}`);
-      await NotificationService.notifyAdminsOfCourseChanges('removed', course);
-      await course.destroy();
+    // Circuit Breaker & Safety Deletion Guards
+    let removed = 0;
+    const candidatesToRemove = Array.from(existingMap.values());
+
+    // Circuit Breaker Check 1: If total scraped is abnormally low compared to DB count (>20% drop), skip all deletions
+    const dropPercentage = existingCourses.length > 0 
+      ? (existingCourses.length - scrapedCourses.length) / existingCourses.length 
+      : 0;
+
+    if (existingCourses.length > 500 && dropPercentage > 0.20) {
+      console.warn(`\n⚠️  CIRCUIT BREAKER TRIGGERED: Scraped count (${scrapedCourses.length}) dropped by ${(dropPercentage * 100).toFixed(1)}% compared to DB count (${existingCourses.length}).`);
+      console.warn(`   Skipping bulk deletion to prevent catastrophic data loss.\n`);
+    } else {
+      for (const course of candidatesToRemove) {
+        // Safety Check 2: Never delete courses for a faculty that wasn't scraped successfully in this run
+        if (!scrapedFaculties.has(course.faculty)) {
+          console.log(`🛡️  Preserving ${course.courseCode} (${course.faculty}) - faculty had 0 scraped courses or was skipped in this run`);
+          continue;
+        }
+
+        console.log(`➖ REMOVED: ${course.courseCode} - ${course.courseName.substring(0, 40)}`);
+        await NotificationService.notifyAdminsOfCourseChanges('removed', course);
+        await course.destroy();
+        removed++;
+      }
     }
-    const removed = toRemove.length;
 
     console.log(`\n📊 Database Sync Summary:`);
     console.log(`   ➕ Added: ${added}`);
