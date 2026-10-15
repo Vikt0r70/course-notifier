@@ -594,9 +594,19 @@ class ScraperService {
     let updated = 0;
     let statusChanges = 0;
 
-    console.log(`\n🔄 Processing ${scrapedCourses.length} scraped courses...\n`);
-
+    // Deduplicate scraped courses in-memory by key to prevent duplicate creation
+    const uniqueScrapedMap = new Map<string, ScrapedCourse>();
     for (const scraped of scrapedCourses) {
+      const key = `${scraped.code}_${scraped.section}_${scraped.faculty}_${scraped.period}`;
+      if (!uniqueScrapedMap.has(key)) {
+        uniqueScrapedMap.set(key, scraped);
+      }
+    }
+    const deduplicatedCourses = Array.from(uniqueScrapedMap.values());
+
+    console.log(`\n🔄 Processing ${deduplicatedCourses.length} unique scraped courses (${scrapedCourses.length - deduplicatedCourses.length} in-memory duplicates skipped)...\n`);
+
+    for (const scraped of deduplicatedCourses) {
       const key = `${scraped.code}_${scraped.section}_${scraped.faculty}_${scraped.period}`;
       const existing = existingMap.get(key);
 

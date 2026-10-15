@@ -75,6 +75,24 @@ const PORTAL_FACULTY_NORMALIZE: Record<string, string> = {
   'طب الاسنان': 'طب الأسنان',
 };
 
+export const COURSE_PREFIX_TO_FACULTY: Record<string, string> = {
+  '01': 'الشريعة',
+  '02': 'الآداب',
+  '03': 'العلوم',
+  '04': 'الاقتصاد والعلوم الإدارية',
+  '05': 'العلوم التربوية',
+  '06': 'الحقوق',
+  '07': 'العلوم الطبية المساندة',
+  '08': 'التمريض',
+  '09': 'الهندسة التكنولوجية',
+  '11': 'الصيدلة',
+  '12': 'الفنون والتصميم',
+  '14': 'الإعلام',
+  '15': 'تكنولوجيا المعلومات',
+  '16': 'طب الأسنان',
+  '17': 'الكلية التقنية المتوسطة',
+};
+
 function normalizeFacultyName(portalName: string): string {
   return PORTAL_FACULTY_NORMALIZE[portalName] || portalName;
 }
@@ -388,12 +406,13 @@ class PortalScraperService {
           await this.delay(2000);
         }
 
-        // Capture previous table fingerprint to verify updates
-        const previousFingerprint = await page.evaluate(() => {
-          const table = document.querySelector('table');
-          return table ? (table.textContent || '').trim().slice(0, 100) : '';
+        // 1. Remove any existing table in DOM so stale courses from previous faculty cannot be parsed
+        await page.evaluate(() => {
+          const tables = document.querySelectorAll('table');
+          tables.forEach(t => t.remove());
         });
 
+        // 2. Set dropdowns and submit form
         await page.evaluate((facId, stId) => {
           const studyType = document.querySelector('select[name=StudyType]') as HTMLSelectElement;
           const facCode = document.querySelector('select[name=facCode]') as HTMLSelectElement;
@@ -413,29 +432,28 @@ class PortalScraperService {
           }
         }, facultyId, studyTypeId);
 
-        // Wait for table mutation or navigation with timeout fallback
+        // 3. Wait for new table to appear or navigation to complete
         try {
           await Promise.race([
             page.waitForFunction(
-              (prev) => {
+              () => {
                 const table = document.querySelector('table');
                 if (!table) return false;
-                const current = (table.textContent || '').trim().slice(0, 100);
-                return current !== prev;
+                const rows = table.querySelectorAll('tr');
+                return rows.length > 0;
               },
-              { timeout: 8000 },
-              previousFingerprint
+              { timeout: 10000 }
             ),
-            page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 8000 }).catch(() => {})
+            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {})
           ]);
         } catch {
-          // Fallback if timeout expires without detectable change
+          // If timeout occurs without table appearing (e.g. faculty has 0 courses), proceed to parse (will return empty)
         }
 
         // Buffer delay to ensure all table rows are rendered
-        await this.delay(2500);
+        await this.delay(1500);
 
-        const courses = await this.parseCoursesFromPage(page, facultyName, studyTypeName);
+        const courses = await this.parseCoursesFromPage(page, facultyId, facultyName, studyTypeName);
 
         if (courses.length > 0 || attempt === maxAttempts) {
           return courses;
@@ -453,10 +471,11 @@ class PortalScraperService {
 
   private async parseCoursesFromPage(
     page: Page,
+    facultyId: string,
     facultyName: string,
     studyTypeName: string
   ): Promise<ScrapedCourse[]> {
-    return await page.evaluate((faculty, studyType) => {
+    return await page.evaluate((facId, faculty, studyType, prefixMap) => {
       const results: ScrapedCourse[] = [];
       const tables = document.querySelectorAll('table');
       if (tables.length === 0) return results;
@@ -534,6 +553,18 @@ class PortalScraperService {
 
         if (!code || !name) continue;
 
+        // Content validation: Verify course code prefix
+        const codePrefix = code.length >= 2 ? code.substring(0, 2) : '';
+
+        // If course code belongs to a known faculty prefix and does not match the faculty being scraped,
+        // it indicates a stale table from a previous faculty/session. Skip this course!
+        if (codePrefix && facId && prefixMap[codePrefix] && codePrefix !== facId) {
+          continue;
+        }
+
+        // Canonical faculty derived from course prefix if recognized, otherwise fallback to normalized faculty
+        const canonicalFaculty = prefixMap[codePrefix] || faculty;
+
         results.push({
           code,
           section,
@@ -545,14 +576,14 @@ class PortalScraperService {
           time,
           method,
           isOpen: !isClosed,
-          faculty,
+          faculty: canonicalFaculty,
           studyType: 'بكالوريوس',
           period: studyType,
         });
       }
 
       return results;
-    }, facultyName, studyTypeName);
+    }, facultyId, normalizeFacultyName(facultyName), studyTypeName, COURSE_PREFIX_TO_FACULTY);
   }
 
   /**
@@ -566,6 +597,17 @@ class PortalScraperService {
     if (scrapedCourses.length === 0) {
       console.log('⚠️  No courses to sync');
       return { added: 0, updated: 0, removed: 0 };
+    }
+
+    // Deduplicate in-memory scraped courses to prevent duplicate inserts within a single run
+    const uniqueScrapedMap = new Map<string, ScrapedCourse>();
+    for (const scraped of scrapedCourses) {
+      const key = `${scraped.code}_${scraped.section}_${scraped.faculty}_${scraped.period}`;
+      uniqueScrapedMap.set(key, scraped);
+    }
+    const deduplicatedCourses = Array.from(uniqueScrapedMap.values());
+    if (deduplicatedCourses.length < scrapedCourses.length) {
+      console.log(`🧹 Deduplicated in-memory courses: ${scrapedCourses.length} -> ${deduplicatedCourses.length} (${scrapedCourses.length - deduplicatedCourses.length} duplicates removed)`);
     }
 
     console.log(`📊 Fetching existing bachelor courses from database...`);
@@ -582,9 +624,9 @@ class PortalScraperService {
     let updated = 0;
     let statusChanges = 0;
 
-    console.log(`\n🔄 Processing ${scrapedCourses.length} scraped courses...\n`);
+    console.log(`\n🔄 Processing ${deduplicatedCourses.length} scraped courses...\n`);
 
-    for (const scraped of scrapedCourses) {
+    for (const scraped of deduplicatedCourses) {
       try {
         const key = `${scraped.code}_${scraped.section}_${scraped.faculty}_${scraped.period}`;
         const existing = existingMap.get(key);
@@ -671,13 +713,14 @@ class PortalScraperService {
     let removed = 0;
     const candidatesToRemove = Array.from(existingMap.values());
 
-    // Circuit Breaker Check 1: If total scraped is abnormally low compared to DB count (>20% drop), skip all deletions
-    const dropPercentage = existingCourses.length > 0 
-      ? (existingCourses.length - scrapedCourses.length) / existingCourses.length 
+    // Circuit Breaker Check 1: Only evaluate drop against existing courses of faculties that were scraped
+    const relevantExisting = existingCourses.filter(c => scrapedFaculties.has(c.faculty));
+    const dropPercentage = relevantExisting.length > 0 
+      ? (relevantExisting.length - deduplicatedCourses.length) / relevantExisting.length 
       : 0;
 
-    if (existingCourses.length > 500 && dropPercentage > 0.20) {
-      console.warn(`\n⚠️  CIRCUIT BREAKER TRIGGERED: Scraped count (${scrapedCourses.length}) dropped by ${(dropPercentage * 100).toFixed(1)}% compared to DB count (${existingCourses.length}).`);
+    if (relevantExisting.length > 500 && dropPercentage > 0.20) {
+      console.warn(`\n⚠️  CIRCUIT BREAKER TRIGGERED: Scraped count (${deduplicatedCourses.length}) dropped by ${(dropPercentage * 100).toFixed(1)}% compared to DB count for scraped faculties (${relevantExisting.length}).`);
       console.warn(`   Skipping bulk deletion to prevent catastrophic data loss.\n`);
     } else {
       for (const course of candidatesToRemove) {
