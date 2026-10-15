@@ -53,6 +53,11 @@
 
 ## Known Bugs / Fragile Areas
 
+### Scraper Circuit Breaker & Baseline Calibration
+
+- **Issue:** Commit `c8c6d20` added a circuit breaker comparing `(existingCourses.length - scrapedCourses.length) / existingCourses.length > 0.20` against total database rows. When scraper degradation or DOM table retention caused courses to inflate (or during partial runs), the breaker triggered on every single run, permanently locking `removed` at 0 and allowing ghost rows to accumulate indefinitely.
+- **Resolution (bdf829d):** Recalibrated `dropPercentage` in `PortalScraperService.ts` to evaluate only against `relevantExisting` (existing courses belonging to the faculties actually scraped), and enforced DOM table removal (`clearScheduleTable`) prior to dropdown submission plus canonical course prefix-to-faculty verification (`COURSE_PREFIX_TO_FACULTY`).
+
 ### Scraper Depends on External Website DOM and CSS
 
 - **Issue:** Course availability is determined by parsing RGB background colors from the university website (`r > 100 && g < 100 && b < 100` = closed).

@@ -1,5 +1,8 @@
 # Plan: Dual Scraper Integration (Public + Student Portal)
 
+> **Status:** Fully Implemented and Hardened in Production (Commit `bdf829d`).  
+> **Key Maintenance Updates:** `PortalScraperService.ts` includes active DOM table clearing before submission, canonical course prefix-to-faculty verification (`COURSE_PREFIX_TO_FACULTY`), in-memory sync batch deduplication, and a scoped circuit breaker to eliminate cross-faculty ghost duplications.
+
 ## Problem Statement
 
 The existing public scraper (`ScraperService.ts`) scrapes the university's public course schedule page. For the **summer semester 2025/2026**, this page is showing stale/empty data while the authenticated student portal (`eservices.zu.edu.jo`) contains the live, accurate course data.
